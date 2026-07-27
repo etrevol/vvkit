@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "name": "burgers_1d_example",
+    "observed_order": 0.0,
+    "expected_order": 2.0,
+    "order_passed": false,
+    "gci_fine": NaN,
+    "asymptotic_ratio": null,
+    "is_asymptotic": false,
+    "convergence_state": "oscillatory",
+    "plot_image_path": "reports\\burgers_1d_example_plot.png"
+  }
+}

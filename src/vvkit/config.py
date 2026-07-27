@@ -1,12 +1,15 @@
 """Pydantic configuration models for vvcase.yaml."""
 
-from typing import Literal
+from pathlib import Path
+from typing import Any, Literal
 
+import yaml
 from pydantic import BaseModel, Field
 
 
 class ReaderConfig(BaseModel):
     type: str
+    file: str = "solution.npz"
     fields: dict[str, str] = Field(default_factory=dict)
     coords: dict[str, str] = Field(default_factory=dict)
 
@@ -41,9 +44,34 @@ class StudyConfig(BaseModel):
     order_tolerance: float = 0.2
 
 
+class ConservationCheckConfig(BaseModel):
+    quantity: str
+    field: str
+    tolerance_mode: Literal["roundoff", "absolute"] = "roundoff"
+    factor: float = 100.0
+
+
+class ChecksConfig(BaseModel):
+    conservation: list[ConservationCheckConfig] = Field(default_factory=list)
+
+
+class ReportConfig(BaseModel):
+    formats: list[str] = Field(default_factory=lambda: ["html", "json", "junit"])
+    output_dir: str = "reports"
+
+
 class VVCaseConfig(BaseModel):
     version: int = 1
     name: str
     solver: SolverConfig
     mms: MMSConfig
     study: StudyConfig
+    checks: ChecksConfig = Field(default_factory=ChecksConfig)
+    report: ReportConfig = Field(default_factory=ReportConfig)
+
+
+def load_config(path: Path) -> VVCaseConfig:
+    """Load and validate a vvcase configuration file."""
+    with path.open("r", encoding="utf-8") as f:
+        data: dict[str, Any] = yaml.safe_load(f)
+    return VVCaseConfig.model_validate(data)

@@ -99,3 +99,43 @@ class CommandAdapter:
             stdout_path=stdout_file,
             stderr_path=stderr_file,
         )
+
+
+def create_adapter(config_solver: Any) -> CommandAdapter | CallableAdapter:
+    """Factory to create an adapter from SolverConfig."""
+    from vvkit.runner.readers import get_reader
+
+    if config_solver.type == "callable":
+        # Callable adapter is currently only for internal python scripts and tests
+        raise ValueError("CallableAdapter cannot be initialized directly from config file yet.")
+
+    reader_func = None
+    if config_solver.reader:
+        r_type = config_solver.reader.type
+        r_file = config_solver.reader.file
+        r_coords = config_solver.reader.coords
+        r_fields = config_solver.reader.fields
+
+        base_reader = get_reader(r_type)
+
+        def wrapped_reader(workdir: Path) -> dict[str, Any]:
+            file_path = workdir / r_file
+            if r_type == "npz":
+                return base_reader(file_path)
+            elif r_type in ["csv", "txt"]:
+                return base_reader(file_path, list(r_coords.values()), list(r_fields.values()))
+            elif r_type == "hdf5":
+                return base_reader(file_path, r_coords, r_fields)
+            else:
+                # Custom readers get the file path
+                return base_reader(file_path)
+        reader_func = wrapped_reader
+
+    template_path = Path(config_solver.template) if config_solver.template else None
+
+    return CommandAdapter(
+        command_template=config_solver.command,
+        input_template_path=template_path,
+        reader_func=reader_func,
+        timeout_s=config_solver.timeout_s,
+    )
