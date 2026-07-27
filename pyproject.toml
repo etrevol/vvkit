@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vvkit"
+version = "0.1.0"
+description = "Verification Harness for Numerical Solvers"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Artem Holovashchenko" }
+]
+dependencies = [
+    "numpy>=1.26.0",
+    "scipy>=1.12.0",
+    "sympy>=1.12",
+    "pydantic>=2.6.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1.0",
+    "matplotlib>=3.8.0",
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "h5py>=3.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "hypothesis>=6.98.0",
+]
+
+[project.scripts]
+vv = "vvkit.cli.main:app"
+
+[project.entry-points."pytest11"]
+vvkit = "vvkit.pytest_plugin"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "N"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+    "sympy.*",
+    "matplotlib.*",
+    "h5py.*",
+    "mpl_toolkits.*"
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
