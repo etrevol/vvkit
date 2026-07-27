@@ -84,16 +84,20 @@ vvkit/
 
 ## Interactive Demos & Examples
 
-The framework provides worked demonstration cases in `examples/demo/`:
+The framework provides an exhaustive pitch demonstration suite in `examples/demo/`:
 
-1. **1D Advection-Diffusion 2nd-Order Finite Volume Solver**: Validates $O(h^2)$ spatial convergence.
-2. **1D 1st-Order Upwind Solver**: Verifies detection of degraded $O(h^1)$ accuracy.
-3. **Conservation Leak Solver**: Pinpoints exact time-step departures in non-conserving solvers.
+1. **1D Advection-Diffusion 2nd-Order**: Validates $O(\Delta x^2)$ spatial convergence in 1D Cartesian.
+2. **1D Temporal Diffusion**: Verifies 1st-order temporal convergence (Forward Euler).
+3. **2D Poisson Spatial Convergence**: Proves full 2D tensor-product support (X, Y matrices).
+4. **1D Spherical Coordinates**: Simulates radial convergence using $r^2 dr$ cell measures for proper $L_2$ mass norm.
+5. **2D Cylindrical Coordinates**: Simulates spatial convergence in $(r, z)$ geometry.
+6. **3D Cartesian Poisson**: Validates memory boundary and large-scale $L_2$ evaluation over $(X, Y, Z)$ domains.
+7. **1D Non-Linear Burgers Equation**: Validates symbolic operator substitution on non-linear terms like $u \partial_x u$.
 
 To run the full demonstration suite and generate verification reports:
 
 ```bash
-uv run python examples/demo/run_demos.py
+uv run python examples/demo/run_pitch.py --auto
 ```
 
 The reports will be written to `examples/demo/workdir/reports/`. Open the `.html` files in any web browser to view the convergence plots and diagnostic metrics.

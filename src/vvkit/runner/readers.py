@@ -8,18 +8,33 @@ from typing import Any
 import numpy as np
 
 
-def read_npz_output(npz_file: Path) -> dict[str, Any]:
+def read_npz_output(
+    npz_file: Path, coord_paths: dict[str, str] | None = None, field_paths: dict[str, str] | None = None
+) -> dict[str, Any]:
     """Read solution and coordinates from a NumPy .npz file."""
     data = np.load(npz_file)
     fields = {}
     coords = {}
-    for key in data.files:
-        if key in ["x", "y", "z"]:
-            coords[key] = data[key]
-        elif key == "cell_measures":
-            pass
-        else:
-            fields[key] = data[key]
+    
+    if coord_paths is None and field_paths is None:
+        # Fallback to old behavior for backwards compatibility
+        for key in data.files:
+            if key in ["x", "y", "z"]:
+                coords[key] = data[key]
+            elif key == "cell_measures":
+                pass
+            else:
+                fields[key] = data[key]
+    else:
+        coord_paths = coord_paths or {}
+        field_paths = field_paths or {}
+        for k, p in coord_paths.items():
+            if p in data.files:
+                coords[k] = data[p]
+        for k, p in field_paths.items():
+            if p in data.files:
+                fields[k] = data[p]
+                
     measures = data["cell_measures"] if "cell_measures" in data.files else None
     return {"fields": fields, "coords": coords, "cell_measures": measures}
 

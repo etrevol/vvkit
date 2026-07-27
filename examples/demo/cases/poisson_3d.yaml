@@ -1,0 +1,30 @@
+version: 1
+name: poisson_3d
+solver:
+  type: command
+  command: ["python", "../../mock_solver.py", "{input_file}"]
+  template: templates/solver.in.j2
+  reader:
+    type: npz
+    file: solution.npz
+    coords: {x: x, y: y, z: z}
+    fields: {u: u}
+mms:
+  # Laplacian in 3D Cartesian
+  operator: "Derivative(u(x, y, z), (x, 2)) + Derivative(u(x, y, z), (y, 2)) + Derivative(u(x, y, z), (z, 2))"
+  solution: "sin(pi*x)*sin(pi*y)*sin(pi*z)"
+  symbols: {}
+  domain: {x: [0.0, 1.0], y: [0.0, 1.0], z: [0.0, 1.0]}
+study:
+  type: spatial
+  user_params:
+    equation: poisson_3d
+  refinement:
+    parameter: n_cells
+    values: [8, 16, 24, 32]
+  reference: cell_average
+  expected_order: 2.0
+  order_tolerance: 0.2
+report:
+  formats: [html, json]
+  output_dir: reports/

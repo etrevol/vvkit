@@ -66,6 +66,49 @@ def run_solver(config: dict, out_file: Path) -> None:
         u_num = u_exact + 0.5 * (dx**2 + dy**2) * u_exact
         np.savez(out_file, x=X, y=Y, u=u_num)
         
+    elif eq_type == "spherical_1d":
+        n_cells = ref_value
+        dr = 1.0 / n_cells
+        r_centers = np.linspace(0.5 * dr, 1.0 - 0.5 * dr, n_cells)
+        
+        u_exact = r_centers**3 - r_centers**2
+        u_num = u_exact + 0.5 * (dr**2) * u_exact
+        cell_measures = (r_centers**2) * dr
+        np.savez(out_file, r=r_centers, u=u_num, cell_measures=cell_measures)
+
+    elif eq_type == "cylindrical_2d":
+        n_cells = ref_value
+        dr = 1.0 / n_cells
+        dz = 1.0 / n_cells
+        r_c = np.linspace(0.5 * dr, 1.0 - 0.5 * dr, n_cells)
+        z_c = np.linspace(0.5 * dz, 1.0 - 0.5 * dz, n_cells)
+        R, Z = np.meshgrid(r_c, z_c, indexing="ij")
+        
+        u_exact = np.sin(np.pi * R) * np.sin(np.pi * Z)
+        u_num = u_exact + 0.5 * (dr**2 + dz**2) * u_exact
+        cell_measures = R * dr * dz
+        np.savez(out_file, r=R, z=Z, u=u_num, cell_measures=cell_measures)
+
+    elif eq_type == "poisson_3d":
+        n_cells = ref_value
+        dx = 1.0 / n_cells
+        x_c = np.linspace(0.5 * dx, 1.0 - 0.5 * dx, n_cells)
+        X, Y, Z = np.meshgrid(x_c, x_c, x_c, indexing="ij")
+        
+        u_exact = np.sin(np.pi * X) * np.sin(np.pi * Y) * np.sin(np.pi * Z)
+        u_num = u_exact + 0.5 * (3 * dx**2) * u_exact
+        np.savez(out_file, x=X, y=Y, z=Z, u=u_num)
+
+    elif eq_type == "burgers_1d_temporal":
+        n_steps = ref_value
+        dt = 1.0 / n_steps
+        x_centers = np.linspace(0.05, 0.95, 10)
+        
+        u_exact = np.exp(-1.0) * np.sin(np.pi * x_centers)
+        # 1st order explicit temporal error
+        u_num = u_exact + 0.1 * dt * np.sin(np.pi * x_centers)
+        np.savez(out_file, x=x_centers, u=u_num)
+        
     else:
         print(f"FATAL ERROR: Unknown equation type {eq_type}", file=sys.stderr)
         sys.exit(1)

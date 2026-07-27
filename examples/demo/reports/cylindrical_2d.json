@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "name": "cylindrical_2d",
+    "observed_order": 2.0000000000000044,
+    "expected_order": 2.0,
+    "order_passed": true,
+    "gci_fine": 0.01021525134438914,
+    "asymptotic_ratio": 0.12510362422938423,
+    "is_asymptotic": false,
+    "convergence_state": "divergent",
+    "plot_image_path": "reports\\cylindrical_2d_plot.png"
+  }
+}

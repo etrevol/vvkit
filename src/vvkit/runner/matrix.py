@@ -122,7 +122,7 @@ def create_adapter(config_solver: Any) -> CommandAdapter | CallableAdapter:
         def wrapped_reader(workdir: Path) -> dict[str, Any]:
             file_path = workdir / r_file
             if r_type == "npz":
-                return base_reader(file_path)
+                return base_reader(file_path, r_coords, r_fields)
             elif r_type in ["csv", "txt"]:
                 return base_reader(file_path, list(r_coords.values()), list(r_fields.values()))
             elif r_type == "hdf5":

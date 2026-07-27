@@ -149,6 +149,10 @@ def main():
         DEMO_DIR / "cases" / "advection_1d.yaml",
         DEMO_DIR / "cases" / "diffusion_1d_temporal.yaml",
         DEMO_DIR / "cases" / "poisson_2d.yaml",
+        DEMO_DIR / "cases" / "spherical_1d.yaml",
+        DEMO_DIR / "cases" / "cylindrical_2d.yaml",
+        DEMO_DIR / "cases" / "poisson_3d.yaml",
+        DEMO_DIR / "cases" / "burgers_1d_temporal.yaml",
     ]
     for case in cases:
         if not case.exists():

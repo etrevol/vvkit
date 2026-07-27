@@ -7,7 +7,7 @@ solver:
   reader:
     type: npz
     file: solution.npz
-    coords: {x: X, y: Y}
+    coords: {x: x, y: y}
     fields: {u: u}
 mms:
   operator: "Derivative(u(x, y), (x, 2)) + Derivative(u(x, y), (y, 2))"

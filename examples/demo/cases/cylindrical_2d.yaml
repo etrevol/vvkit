@@ -1,0 +1,30 @@
+version: 1
+name: cylindrical_2d
+solver:
+  type: command
+  command: ["python", "../../mock_solver.py", "{input_file}"]
+  template: templates/solver.in.j2
+  reader:
+    type: npz
+    file: solution.npz
+    coords: {r: r, z: z}
+    fields: {u: u}
+mms:
+  # Laplacian in cylindrical coords (r, z): 1/r * d/dr(r * du/dr) + d^2u/dz^2
+  operator: "(1/r)*Derivative(r * Derivative(u(r, z), r), r) + Derivative(u(r, z), (z, 2))"
+  solution: "sin(pi*r)*sin(pi*z)"
+  symbols: {}
+  domain: {r: [0.0, 1.0], z: [0.0, 1.0]}
+study:
+  type: spatial
+  user_params:
+    equation: cylindrical_2d
+  refinement:
+    parameter: n_cells
+    values: [16, 32, 64, 128]
+  reference: cell_average
+  expected_order: 2.0
+  order_tolerance: 0.2
+report:
+  formats: [html, json]
+  output_dir: reports/

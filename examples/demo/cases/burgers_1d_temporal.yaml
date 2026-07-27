@@ -1,0 +1,30 @@
+version: 1
+name: burgers_1d_temporal
+solver:
+  type: command
+  command: ["python", "../../mock_solver.py", "{input_file}"]
+  template: templates/solver.in.j2
+  reader:
+    type: npz
+    file: solution.npz
+    coords: {x: x}
+    fields: {u: u}
+mms:
+  # Burgers' equation (viscous)
+  operator: "Derivative(u(x, t), t) + u(x, t)*Derivative(u(x, t), x) - nu*Derivative(u(x, t), (x, 2))"
+  solution: "exp(-t)*sin(pi*x)"
+  symbols: {nu: 0.1}
+  domain: {x: [0.0, 1.0], t: [0.0, 1.0]}
+study:
+  type: temporal
+  user_params:
+    equation: burgers_1d_temporal
+  refinement:
+    parameter: n_steps
+    values: [10, 20, 40, 80]
+  reference: point_value
+  expected_order: 1.0
+  order_tolerance: 0.2
+report:
+  formats: [html, json]
+  output_dir: reports/

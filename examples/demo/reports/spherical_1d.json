@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "name": "spherical_1d",
+    "observed_order": 2.000258197373622,
+    "expected_order": 2.0,
+    "order_passed": true,
+    "gci_fine": 0.0007938197323508642,
+    "asymptotic_ratio": 0.12656412982917556,
+    "is_asymptotic": false,
+    "convergence_state": "divergent",
+    "plot_image_path": "reports\\spherical_1d_plot.png"
+  }
+}
