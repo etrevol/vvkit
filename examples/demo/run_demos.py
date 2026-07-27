@@ -3,8 +3,7 @@
 Demonstrates:
 1. 2nd-order Finite Volume solver verification (Order ~ 2.0, Pass).
 2. 1st-order Upwind solver verification (Order ~ 1.0, Catches order degradation).
-3. Broken Flux solver (Fails order requirement).
-4. Conservation budget check (Detects exact departure time step).
+3. Conservation budget check (Detects exact departure time step).
 """
 
 import sys
@@ -18,7 +17,13 @@ from vvkit.convergence import (
     compute_least_squares_order,
 )
 from vvkit.norms import compute_l2_norm
-from vvkit.report import StudyResultSummary, emit_html_report, emit_json_report, emit_junit_xml
+from vvkit.report import (
+    StudyResultSummary,
+    emit_html_report,
+    emit_json_report,
+    emit_junit_xml,
+    generate_convergence_plot,
+)
 from vvkit.runner import CallableAdapter, CaseSpec, SolverResult
 
 if sys.stdout.encoding.lower() != "utf-8":
@@ -34,12 +39,21 @@ def solver_2nd_order_fv(case: CaseSpec, workdir: Path) -> SolverResult:
     u_exact = np.sin(2 * np.pi * x_centers)
     u_num = u_exact + 0.5 * (dx**2) * np.sin(2 * np.pi * x_centers)
 
-    return SolverResult(
+    res = SolverResult(
         case_id=case.case_id,
         solution_fields={"u": u_num},
         coordinates={"x": x_centers},
         cell_measures=np.full(n_cells, dx),
     )
+
+    # Save artifact in case directory
+    np.savez(
+        workdir / "solution.npz",
+        x=x_centers,
+        u=u_num,
+        cell_measures=res.cell_measures,
+    )
+    return res
 
 
 def solver_1st_order_upwind(case: CaseSpec, workdir: Path) -> SolverResult:
@@ -51,12 +65,20 @@ def solver_1st_order_upwind(case: CaseSpec, workdir: Path) -> SolverResult:
     u_exact = np.sin(2 * np.pi * x_centers)
     u_num = u_exact + 0.8 * dx * np.cos(2 * np.pi * x_centers)
 
-    return SolverResult(
+    res = SolverResult(
         case_id=case.case_id,
         solution_fields={"u": u_num},
         coordinates={"x": x_centers},
         cell_measures=np.full(n_cells, dx),
     )
+
+    np.savez(
+        workdir / "solution.npz",
+        x=x_centers,
+        u=u_num,
+        cell_measures=res.cell_measures,
+    )
+    return res
 
 
 def run_demo_suite(output_dir: Path) -> None:
@@ -74,7 +96,11 @@ def run_demo_suite(output_dir: Path) -> None:
     solutions_2nd = []
 
     for n in grids:
-        case = CaseSpec(case_id=f"2nd_fv_{n}", refinement_parameter="n_cells", refinement_value=n)
+        case = CaseSpec(
+            case_id=f"2nd_fv_{n}",
+            refinement_parameter="n_cells",
+            refinement_value=n,
+        )
         res = adapter_2nd.run(case, output_dir / case.case_id)
         dx = 1.0 / n
         u_exact = np.sin(2 * np.pi * res.coordinates["x"])
@@ -93,12 +119,22 @@ def run_demo_suite(output_dir: Path) -> None:
         p=fit_2nd.order,
     )
 
+    plot_path_2nd = output_dir / "reports" / "2nd_order_plot.png"
+    generate_convergence_plot(
+        np.array(h_vals),
+        np.array(errors_2nd),
+        fit_2nd.order,
+        expected_slope=2.0,
+        output_path=plot_path_2nd,
+    )
+
     passed_2nd = bool(abs(fit_2nd.order - 2.0) <= 0.2)
     print(f"  -> Observed Order: {fit_2nd.order:.3f} (Expected: 2.000)")
     print(f"  -> R^2 Fit Quality: {fit_2nd.r_squared:.4f}")
     print(f"  -> GCI Fine Grid:  {gci_2nd.gci_fine:.3e}")
     asymp_str = f"{gci_2nd.asymptotic_ratio:.3f}" if gci_2nd.asymptotic_ratio else "N/A"
     print(f"  -> Asymptotic R:   {asymp_str} (Is Asymptotic: {bool(gci_2nd.is_asymptotic)})")
+    print(f"  -> Plot saved:     {plot_path_2nd}")
     print(f"  -> Verdict:        {'PASSED' if passed_2nd else 'FAILED'}")
 
     asymp_val = float(gci_2nd.asymptotic_ratio) if gci_2nd.asymptotic_ratio is not None else None
@@ -111,6 +147,7 @@ def run_demo_suite(output_dir: Path) -> None:
         asymptotic_ratio=asymp_val,
         is_asymptotic=bool(gci_2nd.is_asymptotic),
         convergence_state=str(gci_2nd.convergence_state.value),
+        plot_image_path=plot_path_2nd,
     )
     emit_html_report(summary_2nd, output_dir / "reports" / "2nd_order_report.html")
     emit_json_report(summary_2nd, output_dir / "reports" / "2nd_order_report.json")

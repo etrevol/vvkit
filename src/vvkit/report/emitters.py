@@ -1,5 +1,6 @@
 """HTML and JSON emitters for verification study reports."""
 
+import base64
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -17,24 +18,32 @@ class StudyResultSummary:
     asymptotic_ratio: float | None
     is_asymptotic: bool
     convergence_state: str
+    plot_image_path: Path | None = None
 
 
 def emit_json_report(summary: StudyResultSummary, output_path: Path) -> None:
-    """Emit machine-readable JSON report contract.
-
-    Cites: PROJECT_SPEC.md Section 4.4 & Milestone M5.
-    """
+    """Emit machine-readable JSON report contract."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_dict = asdict(summary)
+    if summary_dict.get("plot_image_path"):
+        summary_dict["plot_image_path"] = str(summary_dict["plot_image_path"])
+
     data = {
         "schema_version": 1,
-        "summary": asdict(summary),
+        "summary": summary_dict,
     }
     output_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
-    """Emit self-contained offline HTML report using Jinja2."""
+    """Emit self-contained offline HTML report using Jinja2 with embedded plot."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    plot_b64 = ""
+    if summary.plot_image_path and summary.plot_image_path.exists():
+        plot_bytes = summary.plot_image_path.read_bytes()
+        plot_b64 = base64.b64encode(plot_bytes).decode("utf-8")
+
     html_template = """<!DOCTYPE html>
 <html>
 <head>
@@ -49,6 +58,8 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 8px 12px; border-bottom: 1px solid #334155; text-align: left; }
         th { color: #94a3b8; }
+        .plot-container { text-align: center; margin-top: 20px; }
+        .plot-container img { max-width: 100%; border-radius: 8px; border: 1px solid #334155; }
     </style>
 </head>
 <body>
@@ -78,10 +89,17 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
             </tr>
         </table>
     </div>
+
+    {% if plot_b64 %}
+    <div class="card plot-container">
+        <h3>Convergence Log-Log Plot</h3>
+        <img src="data:image/png;base64,{{ plot_b64 }}" alt="Convergence Plot">
+    </div>
+    {% endif %}
 </body>
 </html>
 """
-    rendered = jinja2.Template(html_template).render(summary=summary)
+    rendered = jinja2.Template(html_template).render(summary=summary, plot_b64=plot_b64)
     output_path.write_text(rendered, encoding="utf-8")
 
 
