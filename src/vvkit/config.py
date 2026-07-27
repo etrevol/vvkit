@@ -37,6 +37,7 @@ class RefinementConfig(BaseModel):
 class StudyConfig(BaseModel):
     type: Literal["spatial", "temporal"] = "spatial"
     refinement: RefinementConfig
+    user_params: dict[str, Any] = Field(default_factory=dict)
     reference: Literal["cell_average", "point_value"] = "cell_average"
     quadrature_order: int = 5
     norms: list[str] = Field(default_factory=lambda: ["L1", "L2", "Linf"])

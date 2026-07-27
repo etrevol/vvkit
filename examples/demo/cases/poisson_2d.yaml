@@ -1,0 +1,29 @@
+version: 1
+name: poisson_2d
+solver:
+  type: command
+  command: ["python", "../../mock_solver.py", "{input_file}"]
+  template: templates/solver.in.j2
+  reader:
+    type: npz
+    file: solution.npz
+    coords: {x: X, y: Y}
+    fields: {u: u}
+mms:
+  operator: "Derivative(u(x, y), (x, 2)) + Derivative(u(x, y), (y, 2))"
+  solution: "sin(pi*x)*sin(pi*y)"
+  symbols: {}
+  domain: {x: [0.0, 1.0], y: [0.0, 1.0]}
+study:
+  type: spatial
+  user_params:
+    equation: poisson_2d
+  refinement:
+    parameter: n_cells
+    values: [16, 32, 64, 128]
+  reference: cell_average
+  expected_order: 2.0
+  order_tolerance: 0.2
+report:
+  formats: [html, json]
+  output_dir: reports/

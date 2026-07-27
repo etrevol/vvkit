@@ -10,34 +10,67 @@ import sys
 from pathlib import Path
 import numpy as np
 
-def parse_input(filepath: Path) -> int:
-    """Parse the Jinja2 generated input file for n_cells."""
+def parse_input(filepath: Path) -> dict:
+    """Parse the Jinja2 generated input file."""
+    config = {}
     try:
         content = filepath.read_text(encoding="utf-8")
         for line in content.splitlines():
-            if line.startswith("n_cells="):
-                return int(float(line.split("=")[1]))
+            line = line.strip()
+            if "=" in line:
+                k, v = line.split("=", 1)
+                config[k.strip()] = v.strip()
+        return config
     except Exception as e:
         print(f"FATAL ERROR: Failed to parse input file {filepath}: {e}", file=sys.stderr)
         sys.exit(1)
-    
-    print(f"FATAL ERROR: n_cells not found in {filepath}", file=sys.stderr)
-    sys.exit(1)
 
-def run_solver(n_cells: int, out_file: Path) -> None:
-    """Compute a 2nd-order Finite Volume solution."""
-    print(f"MockSolver 1.0.0 initializing with {n_cells} cells...")
+def run_solver(config: dict, out_file: Path) -> None:
+    """Compute a discrete solution based on equation type."""
+    eq_type = config.get("equation", "advection_1d")
+    ref_value = int(float(config.get("refinement_value", "32")))
     
-    dx = 1.0 / n_cells
-    x_centers = np.linspace(0.5 * dx, 1.0 - 0.5 * dx, n_cells)
+    print(f"MockSolver 1.0.0 initializing for {eq_type} with param {ref_value}...")
     
-    # 2nd-order FV discretization artifact injected for the MMS exact solution sin(2*pi*x)
-    u_exact = np.sin(2 * np.pi * x_centers)
-    u_num = u_exact + 0.5 * (dx**2) * np.sin(2 * np.pi * x_centers)
-    
-    print("Computing solution arrays...")
+    if eq_type == "advection_1d":
+        n_cells = ref_value
+        dx = 1.0 / n_cells
+        x_centers = np.linspace(0.5 * dx, 1.0 - 0.5 * dx, n_cells)
+        # 2nd-order FV discretization artifact injected for the MMS exact solution sin(2*pi*x)
+        u_exact = np.sin(2 * np.pi * x_centers)
+        u_num = u_exact + 0.5 * (dx**2) * np.sin(2 * np.pi * x_centers)
+        np.savez(out_file, x=x_centers, u=u_num)
+        
+    elif eq_type == "diffusion_1d_temporal":
+        # ref_value is n_steps, time from 0 to 1.0
+        n_steps = ref_value
+        dt = 1.0 / n_steps
+        x_centers = np.linspace(0.05, 0.95, 10) # 10 spatial points fixed
+        
+        # Exact solution at t=1.0: exp(-1.0)*sin(pi*x)
+        u_exact = np.exp(-1.0) * np.sin(np.pi * x_centers)
+        # 1st-order temporal error (Forward Euler)
+        u_num = u_exact + 0.1 * dt * np.sin(np.pi * x_centers)
+        np.savez(out_file, x=x_centers, u=u_num)
+        
+    elif eq_type == "poisson_2d":
+        n_cells = ref_value
+        dx = 1.0 / n_cells
+        dy = 1.0 / n_cells
+        x_c = np.linspace(0.5 * dx, 1.0 - 0.5 * dx, n_cells)
+        y_c = np.linspace(0.5 * dy, 1.0 - 0.5 * dy, n_cells)
+        X, Y = np.meshgrid(x_c, y_c, indexing="ij")
+        
+        u_exact = np.sin(np.pi * X) * np.sin(np.pi * Y)
+        # 2nd-order error
+        u_num = u_exact + 0.5 * (dx**2 + dy**2) * u_exact
+        np.savez(out_file, x=X, y=Y, u=u_num)
+        
+    else:
+        print(f"FATAL ERROR: Unknown equation type {eq_type}", file=sys.stderr)
+        sys.exit(1)
+
     print(f"Writing output to {out_file}...")
-    np.savez(out_file, x=x_centers, u=u_num)
     print("Simulation complete. Exiting normally.")
 
 def main():
@@ -49,8 +82,8 @@ def main():
     # The solver should save its output in the current working directory.
     output_path = Path("solution.npz")
     
-    n_cells = parse_input(args.input_file)
-    run_solver(n_cells, output_path)
+    config = parse_input(args.input_file)
+    run_solver(config, output_path)
 
 if __name__ == "__main__":
     main()

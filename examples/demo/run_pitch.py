@@ -26,7 +26,7 @@ DEMO_DIR = Path(__file__).parent
 def run_command(args: list[str], description: str) -> None:
     """Run a command and handle errors, showing a nice spinner (simulated)."""
     console.print(f"\n[bold cyan]> Executing:[/] [yellow]{' '.join(args)}[/]")
-    time.sleep(1.0)
+    time.sleep(0.5)
     
     # We set PYTHONPATH to ensure it picks up the local vvkit source
     env = os.environ.copy()
@@ -57,43 +57,42 @@ def step_intro():
     
     md = """
 Welcome to the **vvkit Pitch Demo**.
-This automated presentation will demonstrate how a computational scientist uses `vvkit` to verify a numerical PDE solver.
+This automated presentation will demonstrate how a computational scientist uses `vvkit` to verify a numerical PDE solver across various equations and dimensions.
 
 **The Scenario:**
-We have an external, compiled PDE solver (simulated here by `mock_solver.py`). We claim it is 2nd-order accurate in space. We want to mathematically prove this using the **Method of Manufactured Solutions (MMS)** and calculate the **Grid Convergence Index (GCI)** per ASME V&V 20.
+We have an external, compiled PDE solver (simulated here by `mock_solver.py`). We want to mathematically prove its accuracy across different modules using the **Method of Manufactured Solutions (MMS)** and calculate the **Grid Convergence Index (GCI)**.
     """
     console.print(Markdown(md))
     if "--auto" not in sys.argv:
-        input("\nPress ENTER to continue to Step 1 (Configuration)...")
+        input("\nPress ENTER to start the demo suite...")
     else:
-        time.sleep(2.0)
+        time.sleep(1.0)
 
 
-def step_config():
+def step_config(yaml_path: Path):
     console.clear()
-    console.print("[bold magenta]--- Step 1: Declarative Configuration ---[/]")
-    console.print("Instead of writing glue code, we declare the entire verification study in a `vvcase.yaml` file.")
+    console.print(f"[bold magenta]--- Phase: Declarative Configuration ({yaml_path.name}) ---[/]")
+    console.print("Instead of writing glue code, we declare the entire verification study in a YAML file.")
     
-    yaml_path = DEMO_DIR / "burgers_case.yaml"
     with yaml_path.open() as f:
         code = f.read()
     
     syntax = Syntax(code, "yaml", theme="monokai", line_numbers=True)
-    console.print(Panel(syntax, title="burgers_case.yaml"))
+    console.print(Panel(syntax, title=yaml_path.name))
     
     if "--auto" not in sys.argv:
-        input("\nPress ENTER to continue to Step 2 (MMS Generation)...")
+        input("\nPress ENTER to continue to MMS Generation...")
     else:
-        time.sleep(2.0)
+        time.sleep(1.0)
 
 
-def step_mms():
+def step_mms(yaml_path: Path):
     console.clear()
-    console.print("[bold magenta]--- Step 2: Symbolic MMS Generation ---[/]")
+    console.print(f"[bold magenta]--- Phase: Symbolic MMS Generation ({yaml_path.name}) ---[/]")
     console.print("`vvkit` parses the mathematical operator from the YAML and automatically derives the analytical source terms required to force the solver to the exact solution.")
     
     run_command(
-        [sys.executable, "-m", "vvkit.cli.main", "mms", "--config-path", "burgers_case.yaml", "--language", "c", "--output", "mms_source.c"],
+        [sys.executable, "-m", "vvkit.cli.main", "mms", "--config-path", f"cases/{yaml_path.name}", "--language", "c", "--output", "mms_source.c"],
         "Generating C++ Source Term"
     )
     
@@ -103,31 +102,31 @@ def step_mms():
         console.print(Panel(syntax, title="Generated Source (mms_source.c)"))
     
     if "--auto" not in sys.argv:
-        input("\nPress ENTER to continue to Step 3 (Execution & Analysis)...")
+        input("\nPress ENTER to continue to Execution & Analysis...")
     else:
-        time.sleep(2.0)
+        time.sleep(1.0)
 
 
-def step_run():
+def step_run(yaml_path: Path):
     console.clear()
-    console.print("[bold magenta]--- Step 3: Automated Execution & Analysis ---[/]")
+    console.print(f"[bold magenta]--- Phase: Automated Execution & Analysis ({yaml_path.name}) ---[/]")
     console.print("`vvkit` will now template the input files, orchestrate the solver executable across the grid refinement matrix, read the HDF5/NPZ arrays, compute L2 norms, evaluate Least-Squares fits, and generate GCI metrics.")
     
     run_command(
-        [sys.executable, "-m", "vvkit.cli.main", "run", "--config-path", "burgers_case.yaml", "--workdir-base", "workdir"],
-        "Running the Verification Sweep"
+        [sys.executable, "-m", "vvkit.cli.main", "run", "--config-path", f"cases/{yaml_path.name}", "--workdir-base", f"workdir_{yaml_path.stem}"],
+        f"Running the Verification Sweep for {yaml_path.stem}"
     )
     
     if "--auto" not in sys.argv:
-        input("\nPress ENTER to continue to Step 4 (Reporting)...")
+        input("\nPress ENTER to continue...")
     else:
-        time.sleep(2.0)
+        time.sleep(1.0)
 
 
 def step_report():
     console.clear()
-    console.print("[bold magenta]--- Step 4: CI-Ready Reporting ---[/]")
-    console.print("The pipeline has successfully proven 2nd-order convergence and emitted continuous integration contracts.")
+    console.print("[bold magenta]--- Final Phase: CI-Ready Reporting ---[/]")
+    console.print("The pipeline has successfully proven convergence across multiple suites and emitted continuous integration contracts.")
     
     report_dir = DEMO_DIR / "reports"
     console.print("\nGenerated Artifacts:")
@@ -137,8 +136,8 @@ def step_report():
             
     md = """
 ### What's Next?
-- Open `reports/advection_1d_demo.html` in your browser to view the convergence plots.
-- Integrate `advection_1d_demo.xml` into your Jenkins/GitLab CI pipeline.
+- Open the `.html` reports in your browser to view the convergence plots.
+- Integrate the `.xml` reports into your Jenkins/GitLab CI pipeline.
 - Track baseline drifts over time using `vv baseline update`.
     """
     console.print(Markdown(md))
@@ -146,14 +145,21 @@ def step_report():
 
 
 def main():
-    if not (DEMO_DIR / "burgers_case.yaml").exists():
-        console.print("[bold red]Run this script from within its directory, or ensure the demo files exist.[/]")
-        sys.exit(1)
-        
+    cases = [
+        DEMO_DIR / "cases" / "advection_1d.yaml",
+        DEMO_DIR / "cases" / "diffusion_1d_temporal.yaml",
+        DEMO_DIR / "cases" / "poisson_2d.yaml",
+    ]
+    for case in cases:
+        if not case.exists():
+            console.print(f"[bold red]Cannot find {case}. Run this script from within the demo directory.[/]")
+            sys.exit(1)
+            
     step_intro()
-    step_config()
-    step_mms()
-    step_run()
+    for case_file in cases:
+        step_config(case_file)
+        step_mms(case_file)
+        step_run(case_file)
     step_report()
 
 

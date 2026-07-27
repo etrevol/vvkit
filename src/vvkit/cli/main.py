@@ -88,9 +88,6 @@ def run(
     # 1. Parse MMS exact solution for error computation
     u_sym = sp.sympify(config.mms.solution)
     u_sym = u_sym.subs(config.mms.symbols)
-    # Assume 1D spatial for this generic runner (can be extended to 2D/3D later)
-    # the generic runner expects a field "u" and a coordinate "x" based on the scaffold
-    u_exact_func = sp.lambdify(sp.Symbol("x"), u_sym.subs(sp.Symbol("t"), config.mms.domain.get("t", [0, 0])[1]))
 
     # 2. Setup adapter
     adapter = create_adapter(config.solver)
@@ -107,6 +104,7 @@ def run(
             case_id=f"case_{n}",
             refinement_parameter=config.study.refinement.parameter,
             refinement_value=n,
+            user_params=config.study.user_params,
         )
         case_workdir = workdir_base / case.case_id
         console.print(f"  -> Running {case.case_id} in {case_workdir}")
@@ -117,33 +115,54 @@ def run(
                 console.print(f"[bold red]Solver failed for {case.case_id} (exit code {res.exit_status})[/]")
                 raise typer.Exit(code=1)
 
-            # Assume 1D domain [0, 1] for dx calculation based on refinement value
-            domain_x = config.mms.domain.get("x", [0.0, 1.0])
-            dx = (domain_x[1] - domain_x[0]) / n
-
             if config.solver.reader and config.solver.reader.fields:
-                field_name = list(config.solver.reader.fields.keys())[0]
+                field_names = list(config.solver.reader.fields.keys())
             else:
-                field_name = "u"
-
+                field_names = ["u"]
+                
             if config.solver.reader and config.solver.reader.coords:
-                coord_name = list(config.solver.reader.coords.keys())[0]
+                coord_names = list(config.solver.reader.coords.keys())
             else:
-                coord_name = "x"
-            x_coords = res.coordinates[coord_name]
-            u_num = res.solution_fields[field_name]
+                coord_names = ["x"]
 
-            u_exact = u_exact_func(x_coords)
+            # Calculate h_val (mesh size or timestep)
+            if config.study.type == "temporal":
+                domain_val = config.mms.domain.get("t", [0.0, 1.0])
+            else:
+                domain_val = config.mms.domain.get(coord_names[0], [0.0, 1.0])
+            h_val = (domain_val[1] - domain_val[0]) / n
+
+            u_num = res.solution_fields[field_names[0]]
+            
+            # Evaluate exact solution
+            u_sym_eval = u_sym
+            for fs in u_sym.free_symbols:
+                fs_name = str(fs)
+                if fs_name not in coord_names and fs_name in config.mms.domain:
+                    u_sym_eval = u_sym_eval.subs(fs, config.mms.domain[fs_name][1])
+            
+            eval_symbols = [sp.Symbol(c) for c in coord_names]
+            u_exact_func = sp.lambdify(eval_symbols, u_sym_eval, modules="numpy")
+            
+            kwargs = {c: res.coordinates[c] for c in coord_names}
+            u_exact = u_exact_func(**kwargs)
+            if np.isscalar(u_exact):
+                u_exact = np.full_like(u_num, u_exact)
 
             if res.cell_measures is not None:
                 measures = res.cell_measures
             else:
-                measures = np.full_like(x_coords, dx)
+                # If spatial 2D, dx*dy, if 1D, dx
+                if config.study.type == "spatial" and len(coord_names) > 1:
+                    measures = np.full_like(u_num, h_val**len(coord_names))
+                else:
+                    measures = np.full_like(u_num, h_val)
+                    
             err = compute_l2_norm(u_num - u_exact, measures)
 
-            h_vals.append(dx)
+            h_vals.append(h_val)
             errors.append(err)
-            solutions.append(u_num[len(u_num)//2]) # Sample center point for GCI
+            solutions.append(u_num.flatten()[len(u_num.flatten())//2]) # Sample center point for GCI
 
         except Exception as e:
             console.print(f"[bold red]Failed during processing {case.case_id}: {e}[/]")
@@ -231,8 +250,9 @@ def generate_mms(
     # A complete MMS engine would parse the DSL.
     try:
         from sympy.parsing.sympy_parser import parse_expr
-        # Replace u(x, t) with the exact solution
-        op_expr = parse_expr(op_str.replace("u(x, t)", f"({config.mms.solution})"))
+        import re
+        op_str_replaced = re.sub(r'u\([^)]+\)', f"({config.mms.solution})", op_str)
+        op_expr = parse_expr(op_str_replaced)
         op_expr = op_expr.subs(config.mms.symbols).doit()
 
         if language == "c":
