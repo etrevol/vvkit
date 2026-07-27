@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+    <testsuite name="vvkit" tests="1" failures="0" errors="0">
+        <testcase name="1d_advection_2nd_order_fv" classname="vvkit.convergence">
+            
+        </testcase>
+    </testsuite>
+</testsuites>
