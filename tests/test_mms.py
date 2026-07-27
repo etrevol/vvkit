@@ -1,4 +1,5 @@
 import sympy as sp
+
 from vvkit.mms import (
     check_domain_positivity,
     emit_c_source,
@@ -21,7 +22,7 @@ def test_mms_symbolic_cancellation() -> None:
 
     u_m = prob.manufactured_sol
     u_func = sp.Function("u")
-    x, t, nu = sp.Symbol("x"), sp.Symbol("t"), sp.Symbol("nu")
+    nu = sp.Symbol("nu")
 
     def is_u_call(e: sp.Basic) -> bool:
         return isinstance(e, sp.core.function.AppliedUndef) and e.func == u_func
