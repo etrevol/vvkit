@@ -44,6 +44,7 @@ class CommandAdapter:
         self.timeout_s = timeout_s
 
     def run(self, case: CaseSpec, workdir: Path) -> SolverResult:
+        workdir = workdir.resolve()
         workdir.mkdir(parents=True, exist_ok=True)
 
         input_file_path = workdir / "solver.in"
@@ -83,7 +84,7 @@ class CommandAdapter:
         coords: dict[str, Any] = {}
         measures = None
 
-        if self.reader_func:
+        if proc.returncode == 0 and self.reader_func:
             read_data = self.reader_func(workdir)
             fields = read_data.get("fields", {})
             coords = read_data.get("coords", {})
