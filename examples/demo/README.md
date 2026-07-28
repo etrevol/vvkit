@@ -23,6 +23,7 @@ By running this suite, you will witness:
 - **Coordinate System Agnosticism**: Handling of Cartesian, Spherical, and Cylindrical domains.
 - **Rigorous Quadrature**: Utilization of $N$-dimensional Gauss-Legendre cell-averaging to compute true $L_2$ norms.
 - **ASME V&V 20 Metrics**: Estimation of the Grid Convergence Index (GCI), asymptotic range indicator, and expected order validation.
+- **Advanced Diagnostics**: Automatic detection of mathematical round-off floors (noise exclusion from GCI metrics), identification of physically invalid (non-positive) solutions, and catching "vanishing terms" in analytical MMS source evaluations.
 
 ---
 
@@ -107,9 +108,9 @@ The following test suites are executed:
 
 Upon completion, `vvkit` generates a `reports/` directory containing:
 
-- **HTML Report (`{name}.html`)**: A human-readable verification document containing the log-log grid convergence plot, Least-Squares regression statistics ($R^2$, slope standard error), and ASME V&V 20 Grid Convergence Index (GCI) metrics.
+- **HTML Report (`{name}.html`)**: A human-readable verification document containing the log-log grid convergence plot, Least-Squares regression statistics ($R^2$, slope standard error), and ASME V&V 20 Grid Convergence Index (GCI) metrics. It also surfaces critical diagnostic warnings for Divergent/Oscillatory convergence states and Asymptotic Ratio violations ($|R - 1| > 0.1$).
 - **JSON Report (`{name}.json`)**: A machine-readable contract structured according to the `schema_version: 1` specification, ideal for CI/CD tracking and regression alerting.
-- **PNG Plot (`{name}_plot.png`)**: A standalone log-log error vs. element size plot.
+- **PNG Plot (`{name}_plot.png`)**: A standalone log-log error vs. element size plot. If the discretization hits the machine precision limits on the finest grids, `vvkit` dynamically detects this "round-off floor" and plots these excluded points in red (`x--`).
 
 A passing test suite signifies that the observed convergence order rigorously matches the expected theoretical order within the defined tolerance (e.g., $2.0 \pm 0.2$), and that the GCI asymptotic limits hold true.
 
