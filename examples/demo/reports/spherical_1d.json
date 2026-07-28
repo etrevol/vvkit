@@ -2,13 +2,38 @@
   "schema_version": 1,
   "summary": {
     "name": "spherical_1d",
-    "observed_order": 2.000340165081032,
-    "expected_order": 2.0,
-    "order_passed": true,
-    "gci_fine": 0.0004019178983969472,
-    "asymptotic_ratio": 0.4936160299224342,
-    "is_asymptotic": false,
-    "convergence_state": "monotonic",
+    "norms": [
+      {
+        "norm_name": "L1",
+        "observed_order": 2.00038859878156,
+        "expected_order": 2.0,
+        "order_passed": true,
+        "gci_fine": 0.00040189990956683287,
+        "asymptotic_ratio": 0.4935994586797349,
+        "is_asymptotic": false,
+        "convergence_state": "monotonic"
+      },
+      {
+        "norm_name": "L2",
+        "observed_order": 2.000340165081032,
+        "expected_order": 2.0,
+        "order_passed": true,
+        "gci_fine": 0.0004019178983969472,
+        "asymptotic_ratio": 0.4936160299224342,
+        "is_asymptotic": false,
+        "convergence_state": "monotonic"
+      },
+      {
+        "norm_name": "Linf",
+        "observed_order": 1.9995333422067887,
+        "expected_order": 2.0,
+        "order_passed": true,
+        "gci_fine": 0.0004022177097176868,
+        "asymptotic_ratio": 0.49389216041194073,
+        "is_asymptotic": false,
+        "convergence_state": "monotonic"
+      }
+    ],
     "plot_image_path": "reports\\spherical_1d_plot.png"
   }
 }

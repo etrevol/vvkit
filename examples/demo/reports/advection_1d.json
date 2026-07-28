@@ -2,13 +2,38 @@
   "schema_version": 1,
   "summary": {
     "name": "advection_1d",
-    "observed_order": 1.999832553505233,
-    "expected_order": 2.0,
-    "order_passed": true,
-    "gci_fine": 0.005113435255529835,
-    "asymptotic_ratio": 0.4998745533648428,
-    "is_asymptotic": false,
-    "convergence_state": "monotonic",
+    "norms": [
+      {
+        "norm_name": "L1",
+        "observed_order": 2.0005606267519633,
+        "expected_order": 2.0,
+        "order_passed": true,
+        "gci_fine": 0.0051099958276268325,
+        "asymptotic_ratio": 0.4996223493581079,
+        "is_asymptotic": false,
+        "convergence_state": "monotonic"
+      },
+      {
+        "norm_name": "L2",
+        "observed_order": 1.999832553505233,
+        "expected_order": 2.0,
+        "order_passed": true,
+        "gci_fine": 0.005113435255529835,
+        "asymptotic_ratio": 0.4998745533648428,
+        "is_asymptotic": false,
+        "convergence_state": "monotonic"
+      },
+      {
+        "norm_name": "Linf",
+        "observed_order": 1.9976455933711488,
+        "expected_order": 2.0,
+        "order_passed": true,
+        "gci_fine": 0.0051237839018279255,
+        "asymptotic_ratio": 0.5006328804508162,
+        "is_asymptotic": false,
+        "convergence_state": "monotonic"
+      }
+    ],
     "plot_image_path": "reports\\advection_1d_plot.png"
   }
 }

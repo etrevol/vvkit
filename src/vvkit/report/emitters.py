@@ -13,6 +13,8 @@ class NormResultSummary:
     norm_name: str
     observed_order: float
     expected_order: float
+    std_err: float | None
+    r_squared: float | None
     order_passed: bool
     gci_fine: float
     asymptotic_ratio: float | None
@@ -81,6 +83,8 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
                 <th>Norm</th>
                 <th>Observed Order</th>
                 <th>Expected Order</th>
+                <th>Std Err</th>
+                <th>R²</th>
                 <th>GCI (Fine)</th>
                 <th>Asymptotic Ratio (R)</th>
                 <th>Convergence State</th>
@@ -91,9 +95,23 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
                 <td><strong>{{ norm.norm_name }}</strong></td>
                 <td>{{ "%.3f"|format(norm.observed_order) }}</td>
                 <td>{{ "%.3f"|format(norm.expected_order) }}</td>
+                <td>
+                    {% if norm.std_err is not none %}
+                    {{ "%.2e"|format(norm.std_err) }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
+                <td>
+                    {% if norm.r_squared is not none %}
+                    {{ "%.4f"|format(norm.r_squared) }}
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </td>
                 <td>{{ "%.2e"|format(norm.gci_fine) }}</td>
                 <td>
-                    {% if norm.asymptotic_ratio %}
+                    {% if norm.asymptotic_ratio is not none %}
                     {{ "%.3f"|format(norm.asymptotic_ratio) }}
                     {% else %}
                     N/A

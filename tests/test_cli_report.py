@@ -50,6 +50,8 @@ def test_report_emitters(tmp_path: Path) -> None:
                 norm_name="L2",
                 observed_order=2.01,
                 expected_order=2.0,
+                std_err=0.005,
+                r_squared=0.9999,
                 order_passed=True,
                 gci_fine=0.0012,
                 asymptotic_ratio=0.99,

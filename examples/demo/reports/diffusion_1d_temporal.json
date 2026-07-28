@@ -2,13 +2,38 @@
   "schema_version": 1,
   "summary": {
     "name": "diffusion_1d_temporal",
-    "observed_order": 0.9999999999998983,
-    "expected_order": 1.0,
-    "order_passed": true,
-    "gci_fine": 0.0015432630321801043,
-    "asymptotic_ratio": 1.000000000000093,
-    "is_asymptotic": true,
-    "convergence_state": "monotonic",
+    "norms": [
+      {
+        "norm_name": "L1",
+        "observed_order": 0.9999999999998971,
+        "expected_order": 1.0,
+        "order_passed": true,
+        "gci_fine": 0.0015432630321801071,
+        "asymptotic_ratio": 1.000000000000094,
+        "is_asymptotic": true,
+        "convergence_state": "monotonic"
+      },
+      {
+        "norm_name": "L2",
+        "observed_order": 0.9999999999998983,
+        "expected_order": 1.0,
+        "order_passed": true,
+        "gci_fine": 0.0015432630321801043,
+        "asymptotic_ratio": 1.000000000000093,
+        "is_asymptotic": true,
+        "convergence_state": "monotonic"
+      },
+      {
+        "norm_name": "Linf",
+        "observed_order": 0.999999999999895,
+        "expected_order": 1.0,
+        "order_passed": true,
+        "gci_fine": 0.0015432630321801117,
+        "asymptotic_ratio": 1.0000000000000953,
+        "is_asymptotic": true,
+        "convergence_state": "monotonic"
+      }
+    ],
     "plot_image_path": "reports\\diffusion_1d_temporal_plot.png"
   }
 }

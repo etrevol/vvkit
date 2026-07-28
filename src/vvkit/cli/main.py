@@ -176,7 +176,18 @@ def run(
                     measures = np.full_like(u_num, h_val**len(coord_names))
                 else:
                     measures = np.full_like(u_num, h_val)
-                    
+            if config.study.exclude_boundary_cells > 0:
+                n_ex = config.study.exclude_boundary_cells
+                if len(coord_names) == 1:
+                    u_num = u_num[n_ex:-n_ex]
+                    u_exact = u_exact[n_ex:-n_ex]
+                    measures = measures[n_ex:-n_ex]
+                else:
+                    slices = tuple(slice(n_ex, -n_ex) for _ in range(len(coord_names)))
+                    u_num = u_num[slices]
+                    u_exact = u_exact[slices]
+                    measures = measures[slices]
+
             err_diff = u_num - u_exact
             for norm_name in config.study.norms:
                 if norm_name == "L1":
@@ -273,6 +284,8 @@ def run(
             norm_name=norm_name,
             observed_order=float(fit.order),
             expected_order=config.study.expected_order,
+            std_err=float(fit.std_err) if fit.std_err is not None else None,
+            r_squared=float(fit.r_squared) if fit.r_squared is not None else None,
             order_passed=passed,
             gci_fine=float(gci.gci_fine),
             asymptotic_ratio=asymp_val,
@@ -311,6 +324,26 @@ def run(
         emit_json_report(summary, report_dir / f"{config.name}.json")
     if "junit" in config.report.formats:
         emit_junit_xml(summary, report_dir / f"{config.name}.xml")
+
+    baseline_path = Path("baselines") / f"{config.name}_baseline.json"
+    if baseline_path.exists():
+        console.print("\n[cyan]Checking regression baseline...[/cyan]")
+        try:
+            with baseline_path.open("r", encoding="utf-8") as bf:
+                baseline_data = json.load(bf)
+            b_summary = baseline_data.get("summary", {})
+            b_norms = {n["norm_name"]: n for n in b_summary.get("norms", [])}
+            
+            for ns in norm_summaries:
+                b_ns = b_norms.get(ns.norm_name)
+                if b_ns:
+                    drift_p = ns.observed_order - b_ns.get("observed_order", 0.0)
+                    drift_gci = ns.gci_fine - b_ns.get("gci_fine", 0.0)
+                    console.print(f"  [{ns.norm_name}] Baseline Drift: Δp = {drift_p:+.3f}, ΔGCI = {drift_gci:+.2e}")
+                else:
+                    console.print(f"  [{ns.norm_name}] No baseline data available.")
+        except Exception as e:
+            console.print(f"[bold yellow]Failed to read baseline for drift report: {e}[/]")
 
     if not all_passed:
         raise typer.Exit(code=1)
