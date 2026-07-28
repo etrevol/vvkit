@@ -47,3 +47,24 @@ def test_baseline_store_and_drift(tmp_path: Path) -> None:
     # Drifted match
     res_drift = store.compare("burgers_1d", {"L2_order": 1.5, "L2_error": 1.2e-4}, rtol=1e-2)
     assert res_drift.is_drifted is True
+
+
+def test_conservation_imbalance_zero_at_start() -> None:
+    """Verify imbalance_series[0] is exactly 0.0 after off-by-one fix."""
+    q = np.array([100.0, 100.0, 100.0], dtype=np.float64)
+    flux_in = np.array([1.0, 2.0, 3.0], dtype=np.float64)
+    flux_out = np.array([1.0, 2.0, 3.0], dtype=np.float64)
+    result = check_conservation(q, flux_in, flux_out)
+    assert result.imbalance_series[0] == 0.0
+
+
+def test_conservation_departure_step() -> None:
+    """A deliberate leak at step 3 should be identified."""
+    n = 10
+    q = np.full(n, 1.0, dtype=np.float64)
+    # Insert a jump at step 5
+    q[5:] += 0.1  # sudden mass gain
+    result = check_conservation(q, factor=1.0)  # tight tolerance
+    assert not result.is_conserved
+    assert result.departure_step is not None
+    assert result.departure_step == 5

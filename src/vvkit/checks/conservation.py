@@ -56,12 +56,12 @@ def check_conservation(
     cum_source = 0.0
 
     for i in range(n_steps):
-        if flux_in_series is not None and flux_out_series is not None:
-            cum_flux += flux_in_series[i] - flux_out_series[i]
-        if source_series is not None:
-            cum_source += source_series[i]
-
         imbalance_series[i] = (q_time_series[i] - q0 - cum_flux - cum_source) / q_scale
+
+        if flux_in_series is not None and flux_out_series is not None and i < n_steps - 1:
+            cum_flux += flux_in_series[i] - flux_out_series[i]
+        if source_series is not None and i < n_steps - 1:
+            cum_source += source_series[i]
 
     tol = factor * n_steps * eps
     final_imbalance = float(imbalance_series[-1])

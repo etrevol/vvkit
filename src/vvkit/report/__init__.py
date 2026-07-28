@@ -15,17 +15,28 @@
 """Report module initialization."""
 
 from vvkit.report.emitters import (
+    ConservationResultSummary,
+    EnvironmentInfo,
+    GCITableRow,
+    MMSDiagnostics,
+    NormResultSummary,
     StudyResultSummary,
     emit_html_report,
     emit_json_report,
     emit_junit_xml,
 )
-from vvkit.report.plots import generate_convergence_plot
+from vvkit.report.plots import generate_conservation_plot, generate_convergence_plot
 
 __all__ = [
+    "ConservationResultSummary",
+    "EnvironmentInfo",
+    "GCITableRow",
+    "MMSDiagnostics",
+    "NormResultSummary",
     "StudyResultSummary",
-    "emit_json_report",
     "emit_html_report",
+    "emit_json_report",
     "emit_junit_xml",
+    "generate_conservation_plot",
     "generate_convergence_plot",
 ]

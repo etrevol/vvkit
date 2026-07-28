@@ -14,6 +14,8 @@
 
 """Typer CLI application entry point for vvkit."""
 
+import datetime
+import platform
 import shutil
 from pathlib import Path
 from typing import Annotated
@@ -23,18 +25,24 @@ import sympy as sp
 import typer
 from rich.console import Console
 
+import vvkit
 from vvkit.config import load_config
 from vvkit.convergence import compute_gci, compute_least_squares_order
+from vvkit.convergence.order import compute_pairwise_order
 from vvkit.mms.emitters import emit_c_source, emit_cpp_source, emit_python_source
 from vvkit.norms.norms import compute_l1_norm, compute_l2_norm, compute_linf_norm
 from vvkit.report.emitters import (
-    StudyResultSummary,
+    ConservationResultSummary,
+    EnvironmentInfo,
+    GCITableRow,
+    MMSDiagnostics,
     NormResultSummary,
+    StudyResultSummary,
     emit_html_report,
     emit_json_report,
     emit_junit_xml,
 )
-from vvkit.report.plots import generate_convergence_plot
+from vvkit.report.plots import generate_conservation_plot, generate_convergence_plot
 from vvkit.runner.adapters import CaseSpec
 from vvkit.runner.matrix import create_adapter
 
@@ -240,9 +248,10 @@ def run(
     console.print("[cyan]Computing convergence metrics...[/cyan]")
 
     from vvkit.convergence.diagnostics import detect_roundoff_floor
-    norm_summaries = []
-    fitted_slopes = {}
-    excluded_idxs = {}
+    norm_summaries: list[NormResultSummary] = []
+    fitted_slopes: dict[str, float] = {}
+    excluded_idxs: dict[str, int | None] = {}
+    gci_table_rows: list[GCITableRow] = []
 
     for norm_name in config.study.norms:
         errors_arr = np.array(errors_by_norm[norm_name])
@@ -269,6 +278,12 @@ def run(
 
         fit = compute_least_squares_order(np.array(h_vals_fit), np.array(errors_fit))
         fitted_slopes[norm_name] = fit.order
+
+        pairwise_orders: list[float] = []
+        for j in range(len(errors_fit) - 1):
+            if errors_fit[j] > 0 and errors_fit[j + 1] > 0 and h_vals_fit[j] > h_vals_fit[j + 1]:
+                pw = compute_pairwise_order(errors_fit[j], errors_fit[j + 1], h_vals_fit[j] / h_vals_fit[j + 1])
+                pairwise_orders.append(float(pw))
         
         if len(sols_fit) >= 3:
             gci = compute_gci(
@@ -291,6 +306,25 @@ def run(
             console.print("[bold red]Not enough points for GCI.[/bold red]")
             raise typer.Exit(code=1)
 
+        if norm_name == config.study.norms[0] and len(sols_fit) >= 3:
+            for k in range(len(sols_fit) - 2):
+                f1_k, f2_k, f3_k = sols_fit[k + 2], sols_fit[k + 1], sols_fit[k]
+                r21_k = grids_fit[k + 2] / grids_fit[k + 1]
+                r32_k = grids_fit[k + 1] / grids_fit[k]
+                gci_k = compute_gci(f1=f1_k, f2=f2_k, f3=f3_k, r21=r21_k, r32=r32_k, p=fit.order)
+                e21 = f2_k - f1_k
+                e32 = f3_k - f2_k
+                rc_val = float(e21 / e32) if e32 != 0.0 else 0.0
+                gci_table_rows.append(GCITableRow(
+                    grid_triplet=f"{grids_fit[k+2]:.0f}/{grids_fit[k+1]:.0f}/{grids_fit[k]:.0f}",
+                    gci_fine=float(gci_k.gci_fine),
+                    safety_factor=gci_k.safety_factor,
+                    asymptotic_ratio=float(gci_k.asymptotic_ratio) if gci_k.asymptotic_ratio is not None else None,
+                    is_asymptotic=bool(gci_k.is_asymptotic),
+                    convergence_condition_rc=rc_val,
+                    convergence_state=str(gci_k.convergence_state.value),
+                ))
+
         passed = bool(abs(fit.order - config.study.expected_order) <= config.study.order_tolerance)
         asymp_val = float(gci.asymptotic_ratio) if gci.asymptotic_ratio is not None else None
         
@@ -305,6 +339,8 @@ def run(
             asymptotic_ratio=asymp_val,
             is_asymptotic=bool(gci.is_asymptotic),
             convergence_state=str(gci.convergence_state.value),
+            pairwise_orders=pairwise_orders,
+            errors_per_grid=[float(e) for e in errors_by_norm[norm_name]],
         ))
         
         expected = config.study.expected_order
@@ -323,13 +359,51 @@ def run(
         fitted_slopes=fitted_slopes,
         expected_slope=config.study.expected_order,
         output_path=plot_path,
-        excluded_idxs=excluded_idxs
+        excluded_idxs=excluded_idxs,
+        study_name=config.name,
     )
+
+    env_info = EnvironmentInfo(
+        vvkit_version=vvkit.__version__,
+        platform=platform.platform(),
+        timestamp=datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+        python_version=platform.python_version(),
+        config_echo=config_path.read_text(encoding="utf-8"),
+    )
+
+    mms_diag: MMSDiagnostics | None = None
+    try:
+        from vvkit.mms.dsl import parse_mms_problem
+        from vvkit.mms.preset import check_domain_positivity
+        prob = parse_mms_problem(
+            config.mms.operator, config.mms.solution,
+            symbols_dict=config.mms.symbols, domain_dict=config.mms.domain,
+        )
+        all_syms = prob.variables.copy()
+        if prob.time_var and prob.time_var not in all_syms:
+            all_syms.append(prob.time_var)
+        domain_bounds = {str(s): tuple(config.mms.domain[str(s)]) for s in all_syms if str(s) in config.mms.domain}
+        is_pos = check_domain_positivity(prob.manufactured_sol, symbols=all_syms, domain=domain_bounds)
+        mms_diag = MMSDiagnostics(
+            operator_str=config.mms.operator,
+            solution_str=config.mms.solution,
+            vanished_terms=prob.vanished_terms,
+            is_positive=is_pos,
+        )
+    except Exception:
+        pass
+
+    conservation_summaries: list[ConservationResultSummary] = []
 
     summary = StudyResultSummary(
         name=config.name,
         norms=norm_summaries,
         plot_image_path=plot_path,
+        grid_sizes=[float(h) for h in h_vals],
+        gci_table=gci_table_rows,
+        environment=env_info,
+        mms_diagnostics=mms_diag,
+        conservation_results=conservation_summaries,
     )
 
     if "html" in config.report.formats:

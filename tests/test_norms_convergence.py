@@ -117,3 +117,44 @@ def test_gci_diagnostics() -> None:
     res_2g = compute_gci(1.0, 1.05)
     assert res_2g.safety_factor == 3.0
     assert res_2g.asymptotic_ratio is None
+
+
+@pytest.mark.parametrize("expected_p", [1.0, 1.5, 3.0, 4.0])
+def test_order_recovery_multiple_orders(expected_p: float) -> None:
+    """Verify order recovery for various p values (spec §M1 acceptance)."""
+    C = 0.5
+    h_values = np.array([1/8, 1/16, 1/32, 1/64, 1/128], dtype=np.float64)
+    errors = C * h_values ** expected_p
+    fit = compute_least_squares_order(h_values, errors)
+    assert abs(fit.order - expected_p) < 1e-10, f"Expected p={expected_p}, got {fit.order}"
+
+
+def test_oscillatory_convergence_test() -> None:
+    # e21 = -0.1, e32 = 0.2 -> e21/e32 = -0.5
+    res = compute_gci(1.0, 0.9, 1.1, r21=2.0, r32=2.0, p=2.0)
+    assert res.convergence_state == ConvergenceState.OSCILLATORY
+
+
+def test_divergent_sequence_test() -> None:
+    # e21 = 0.2, e32 = 0.1 -> e21/e32 = 2.0
+    res = compute_gci(1.0, 1.2, 1.1, r21=2.0, r32=2.0, p=2.0)
+    assert res.convergence_state == ConvergenceState.DIVERGENT
+
+
+def test_roundoff_floor_detection() -> None:
+    """U-shaped error: decreasing then increasing (spec §M1 acceptance)."""
+    from vvkit.convergence.diagnostics import detect_roundoff_floor
+    errors = np.array([1e-2, 1e-3, 1e-4, 1e-5, 2e-5, 5e-5], dtype=np.float64)
+    min_idx = detect_roundoff_floor(errors)
+    assert min_idx == 3, f"Expected minimum at index 3, got {min_idx}"
+
+
+def test_gci_computation_hand_calculated() -> None:
+    # f1=1.0, f2=1.2, f3=2.0
+    # e21 = 0.2, e32 = 0.8
+    # r=2, p=2 -> r^p - 1 = 3
+    # GCI_fine = Fs * |e21| / (r^p - 1) = 1.25 * 0.2 / 3 = 0.08333333333333333
+    res = compute_gci(1.0, 1.2, 2.0, r21=2.0, r32=2.0, p=2.0)
+    assert res.convergence_state == ConvergenceState.MONOTONIC
+    assert res.is_asymptotic is True
+    assert abs(res.gci_fine - (1.25 * 0.2 / 3.0)) < 1e-10
