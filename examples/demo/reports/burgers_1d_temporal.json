@@ -103,7 +103,7 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T13:18:59.800010+00:00",
+      "timestamp": "2026-07-28T13:40:45.509540+00:00",
       "python_version": "3.12.1",
       "config_echo": "version: 1\nname: burgers_1d_temporal\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x}\n    fields: {u: u}\nmms:\n  # Burgers' equation (viscous)\n  operator: \"Derivative(u(x, t), t) + u(x, t)*Derivative(u(x, t), x) - nu*Derivative(u(x, t), (x, 2))\"\n  solution: \"exp(-t)*sin(pi*x)\"\n  symbols: {nu: 0.1}\n  domain: {x: [0.0, 1.0], t: [0.0, 1.0]}\nstudy:\n  type: temporal\n  user_params:\n    equation: burgers_1d_temporal\n  refinement:\n    parameter: n_steps\n    values: [10, 20, 40, 80]\n  reference: point_value\n  expected_order: 1.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },

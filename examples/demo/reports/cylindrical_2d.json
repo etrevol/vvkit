@@ -103,7 +103,7 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T13:18:34.172956+00:00",
+      "timestamp": "2026-07-28T13:40:20.743915+00:00",
       "python_version": "3.12.1",
       "config_echo": "version: 1\nname: cylindrical_2d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {r: r, z: z}\n    fields: {u: u}\nmms:\n  # Laplacian in cylindrical coords (r, z): 1/r * d/dr(r * du/dr) + d^2u/dz^2\n  operator: \"(1/r)*Derivative(r * Derivative(u(r, z), r), r) + Derivative(u(r, z), (z, 2))\"\n  solution: \"sin(pi*r)*sin(pi*z)\"\n  symbols: {}\n  domain: {r: [0.0, 1.0], z: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: cylindrical_2d\n  refinement:\n    parameter: n_cells\n    values: [16, 32, 64, 128]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },

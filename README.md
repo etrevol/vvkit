@@ -11,7 +11,7 @@
 
 > **`pytest` proves your code runs. `vvkit` proves your discretization converges at the order you claim.**
 
-`vvkit` is the missing verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)**, systematic grid refinement sweeps, **Grid Convergence Index (GCI)** estimation per ASME V&V 20, discrete conservation budget checks, and regression baseline drift detection.
+`vvkit` is the verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)**, systematic grid refinement sweeps, **Grid Convergence Index (GCI)** estimation per ASME V&V 20, discrete conservation budget checks, and regression baseline drift detection.
 
 ---
 
@@ -22,7 +22,7 @@
 - **Rigorous Order of Accuracy**:
   - Pairwise order and log-log **Least-Squares fit** with standard error and $R^2$.
   - **Roache transcendental root-finding** for non-constant grid refinement ratios $r = h_i / h_j$.
-  - **Gauss-Legendre cell-averaging** ($\ge 4$th-order quadrature) to prevent $O(h^2)$ capping on Finite Volume solvers.
+  - **Gauss-Legendre cell-averaging** ($\geq$ 4th-order quadrature) to prevent $O(h^2)$ capping on Finite Volume solvers.
 - **ASME V&V 20 Compliance**:
   - Grid Convergence Index ($\text{GCI}_{\text{fine}}$) with automatic safety factor selection ($F_s = 1.25$ vs $F_s = 3.0$).
   - Asymptotic range indicator ($R$) and convergence state classification ($R_c$: Monotonic, Oscillatory, Divergent).

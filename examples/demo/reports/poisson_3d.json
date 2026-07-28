@@ -103,7 +103,7 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T13:18:46.683420+00:00",
+      "timestamp": "2026-07-28T13:40:32.958566+00:00",
       "python_version": "3.12.1",
       "config_echo": "version: 1\nname: poisson_3d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x, y: y, z: z}\n    fields: {u: u}\nmms:\n  # Laplacian in 3D Cartesian\n  operator: \"Derivative(u(x, y, z), (x, 2)) + Derivative(u(x, y, z), (y, 2)) + Derivative(u(x, y, z), (z, 2))\"\n  solution: \"sin(pi*x)*sin(pi*y)*sin(pi*z)\"\n  symbols: {}\n  domain: {x: [0.0, 1.0], y: [0.0, 1.0], z: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: poisson_3d\n  refinement:\n    parameter: n_cells\n    values: [8, 16, 24, 32]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },

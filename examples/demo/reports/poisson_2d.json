@@ -103,7 +103,7 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T13:18:08.948471+00:00",
+      "timestamp": "2026-07-28T13:39:56.859018+00:00",
       "python_version": "3.12.1",
       "config_echo": "version: 1\nname: poisson_2d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x, y: y}\n    fields: {u: u}\nmms:\n  operator: \"Derivative(u(x, y), (x, 2)) + Derivative(u(x, y), (y, 2))\"\n  solution: \"sin(pi*x)*sin(pi*y)\"\n  symbols: {}\n  domain: {x: [0.0, 1.0], y: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: poisson_2d\n  refinement:\n    parameter: n_cells\n    values: [16, 32, 64, 128]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },

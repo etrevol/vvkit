@@ -103,7 +103,7 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T13:17:45.176455+00:00",
+      "timestamp": "2026-07-28T13:39:32.927947+00:00",
       "python_version": "3.12.1",
       "config_echo": "version: 1\nname: advection_1d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x}\n    fields: {u: u}\nmms:\n  operator: \"Derivative(u(x, t), t) + c*Derivative(u(x, t), x)\"\n  solution: \"sin(2*pi*x)\"\n  symbols: {c: 1.0}\n  domain: {x: [0.0, 1.0], t: [0.0, 0.1]}\nstudy:\n  type: spatial\n  user_params:\n    equation: advection_1d\n  refinement:\n    parameter: n_cells\n    values: [32, 64, 128, 256]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },
