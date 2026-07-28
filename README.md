@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="design/assets/banner.svg" alt="vvkit banner" width="100%">
+</p>
+
 # vvkit — Verification Harness for Numerical Solvers
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
