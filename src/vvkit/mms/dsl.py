@@ -17,6 +17,16 @@ class MMSProblem:
     source_term: sp.Expr
     vanished_terms: list[str]
 
+    def get_initial_condition(self) -> sp.Expr | None:
+        """Evaluate manufactured solution at t=0."""
+        if self.time_var is None:
+            return None
+        return sp.simplify(self.manufactured_sol.subs(self.time_var, 0.0))
+
+    def get_boundary_condition(self, var: sp.Symbol, value: float) -> sp.Expr:
+        """Evaluate manufactured solution at a specific domain boundary."""
+        return sp.simplify(self.manufactured_sol.subs(var, value))
+
 
 def parse_mms_problem(
     operator_str: str,
@@ -109,6 +119,24 @@ def parse_mms_problem(
         prob_vars = [sym_objs["x"]]
 
     vanished: list[str] = []
+    
+    # Detect vanishing terms
+    if isinstance(op_expr, sp.Add):
+        terms_to_check = op_expr.args
+    else:
+        terms_to_check = (op_expr,)
+        
+    for term in terms_to_check:
+        term_subbed = term.replace(is_u_call, replace_u_call)
+        if term_subbed == term:
+            term_subbed = term.subs(u_sym, u_m)
+        term_eval = term_subbed.doit()
+        if symbols_dict:
+            term_eval = term_eval.subs(sym_sub_map)
+        term_eval = sp.simplify(term_eval)
+        
+        if term_eval == 0:
+            vanished.append(str(term))
 
     return MMSProblem(
         operator_expr=op_expr,

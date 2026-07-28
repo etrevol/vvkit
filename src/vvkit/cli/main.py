@@ -203,15 +203,45 @@ def run(
 
     console.print("[cyan]Computing convergence metrics...[/cyan]")
 
-    fit = compute_least_squares_order(np.array(h_vals), np.array(errors))
-    gci = compute_gci(
-        f1=solutions[-1],
-        f2=solutions[-2],
-        f3=solutions[-3],
-        r21=grids[-1]/grids[-2],
-        r32=grids[-2]/grids[-3],
-        p=fit.order,
-    )
+    from vvkit.convergence.diagnostics import detect_roundoff_floor
+    errors_arr = np.array(errors)
+    min_idx = detect_roundoff_floor(errors_arr)
+    
+    if min_idx < len(errors_arr) - 1:
+        excluded_count = len(errors_arr) - min_idx - 1
+        console.print(f"[bold yellow]Warning: Round-off floor detected at grid {grids[min_idx]}. Excluding {excluded_count} finer grids from metrics.[/bold yellow]")
+        h_vals_fit = h_vals[:min_idx + 1]
+        errors_fit = errors[:min_idx + 1]
+        sols_fit = solutions[:min_idx + 1]
+        grids_fit = grids[:min_idx + 1]
+    else:
+        h_vals_fit = h_vals
+        errors_fit = errors
+        sols_fit = solutions
+        grids_fit = grids
+
+    fit = compute_least_squares_order(np.array(h_vals_fit), np.array(errors_fit))
+    
+    if len(sols_fit) >= 3:
+        gci = compute_gci(
+            f1=sols_fit[-1],
+            f2=sols_fit[-2],
+            f3=sols_fit[-3],
+            r21=grids_fit[-1]/grids_fit[-2],
+            r32=grids_fit[-2]/grids_fit[-3],
+            p=fit.order,
+        )
+    elif len(sols_fit) == 2:
+        gci = compute_gci(
+            f1=sols_fit[-1],
+            f2=sols_fit[-2],
+            f3=None,
+            r21=grids_fit[-1]/grids_fit[-2],
+            p=fit.order,
+        )
+    else:
+        console.print("[bold red]Not enough points for GCI.[/bold red]")
+        raise typer.Exit(code=1)
 
     passed = bool(abs(fit.order - config.study.expected_order) <= config.study.order_tolerance)
 
@@ -224,6 +254,7 @@ def run(
         fit.order,
         expected_slope=config.study.expected_order,
         output_path=plot_path,
+        excluded_idx=min_idx if min_idx < len(errors_arr) - 1 else None
     )
 
     asymp_val = float(gci.asymptotic_ratio) if gci.asymptotic_ratio is not None else None
@@ -289,6 +320,29 @@ def generate_mms(
             symbols_dict=config.mms.symbols,
             domain_dict=config.mms.domain,
         )
+
+        if prob.vanished_terms:
+            console.print(f"[bold yellow]Warning: The following operator terms vanish with the chosen manufactured solution: {prob.vanished_terms}[/bold yellow]")
+
+        from vvkit.mms.preset import check_domain_positivity
+        
+        all_syms = prob.variables.copy()
+        if prob.time_var and prob.time_var not in all_syms:
+            all_syms.append(prob.time_var)
+            
+        domain_bounds = {}
+        for s in all_syms:
+            if str(s) in config.mms.domain:
+                domain_bounds[str(s)] = tuple(config.mms.domain[str(s)])
+                
+        is_positive = check_domain_positivity(
+            prob.manufactured_sol,
+            symbols=all_syms,
+            domain=domain_bounds,
+        )
+        if not is_positive:
+            console.print("[bold yellow]Warning: The manufactured solution is not strictly positive over the domain. Physical solvers may crash![/bold yellow]")
+
         op_expr = prob.source_term
 
         if language == "c":

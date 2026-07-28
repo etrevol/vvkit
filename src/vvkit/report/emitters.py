@@ -88,6 +88,22 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
                 </td>
             </tr>
         </table>
+
+        {% if summary.convergence_state == 'oscillatory' %}
+        <div style="background: #451a03; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 20px;">
+            <strong>Warning:</strong> Convergence is oscillatory (R_c < 0). GCI estimates may be unreliable.
+        </div>
+        {% elif summary.convergence_state == 'divergent' %}
+        <div style="background: #4c0519; border-left: 4px solid #e11d48; padding: 10px; margin-top: 20px;">
+            <strong>Critical:</strong> Study is divergent (|R_c| > 1). The discretization has failed to converge.
+        </div>
+        {% endif %}
+        
+        {% if not summary.is_asymptotic and summary.asymptotic_ratio %}
+        <div style="background: #451a03; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 20px;">
+            <strong>Warning:</strong> Solutions are outside the asymptotic range (|R - 1| > 0.1). Order estimates are unreliable.
+        </div>
+        {% endif %}
     </div>
 
     {% if plot_b64 %}

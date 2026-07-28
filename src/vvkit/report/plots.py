@@ -13,6 +13,7 @@ def generate_convergence_plot(
     fitted_slope: float,
     expected_slope: float,
     output_path: Path,
+    excluded_idx: int | None = None,
 ) -> None:
     """Generate log-log convergence plot comparing measured error vs grid size h.
 
@@ -22,7 +23,13 @@ def generate_convergence_plot(
 
     fig, ax = plt.subplots(figsize=(6, 4.5), dpi=150)
     label_meas = f"Measured (slope={fitted_slope:.2f})"
-    ax.loglog(h_values, errors, "o-", label=label_meas, color="#0284c7", lw=2)
+    if excluded_idx is not None and excluded_idx < len(errors) - 1:
+        # Plot valid points
+        ax.loglog(h_values[:excluded_idx+1], errors[:excluded_idx+1], "o-", label=label_meas, color="#0284c7", lw=2)
+        # Plot excluded points (round-off floor)
+        ax.loglog(h_values[excluded_idx+1:], errors[excluded_idx+1:], "x--", label="Excluded (Round-off)", color="#ef4444", lw=1.5, markersize=8)
+    else:
+        ax.loglog(h_values, errors, "o-", label=label_meas, color="#0284c7", lw=2)
 
     ref_errors = errors[-1] * ((h_values / h_values[-1]) ** expected_slope)
     label_ref = f"Reference O(h^{expected_slope:.1f})"
