@@ -42,15 +42,21 @@ def test_cli_init_and_run(tmp_path: Path) -> None:
 
 
 def test_report_emitters(tmp_path: Path) -> None:
+    from vvkit.report.emitters import NormResultSummary
     summary = StudyResultSummary(
         name="test_study",
-        observed_order=2.01,
-        expected_order=2.0,
-        order_passed=True,
-        gci_fine=0.0012,
-        asymptotic_ratio=0.99,
-        is_asymptotic=True,
-        convergence_state="monotonic",
+        norms=[
+            NormResultSummary(
+                norm_name="L2",
+                observed_order=2.01,
+                expected_order=2.0,
+                order_passed=True,
+                gci_fine=0.0012,
+                asymptotic_ratio=0.99,
+                is_asymptotic=True,
+                convergence_state="monotonic",
+            )
+        ]
     )
 
     json_path = tmp_path / "report.json"

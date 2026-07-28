@@ -61,6 +61,6 @@ def test_domain_positivity_and_presets() -> None:
     expr_pos = x**2 + 1.0
     expr_neg = sp.sin(x)
 
-    assert check_domain_positivity(expr_pos, x, (0.0, 1.0)) is True
-    assert check_domain_positivity(expr_neg, x, (-1.0, 1.0)) is False
-    assert check_domain_positivity(expr_pos, x, (0.0, 1.0), sym_t=t, t_range=(0.0, 1.0)) is True
+    assert check_domain_positivity(expr_pos, [x], {"x": (0.0, 1.0)}) is True
+    assert check_domain_positivity(expr_neg, [x], {"x": (-1.0, 1.0)}) is False
+    assert check_domain_positivity(expr_pos, [x, t], {"x": (0.0, 1.0), "t": (0.0, 1.0)}) is True

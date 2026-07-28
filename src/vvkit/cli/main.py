@@ -12,9 +12,10 @@ from rich.console import Console
 from vvkit.config import load_config
 from vvkit.convergence import compute_gci, compute_least_squares_order
 from vvkit.mms.emitters import emit_c_source, emit_cpp_source, emit_python_source
-from vvkit.norms import compute_l2_norm
+from vvkit.norms.norms import compute_l1_norm, compute_l2_norm, compute_linf_norm
 from vvkit.report.emitters import (
     StudyResultSummary,
+    NormResultSummary,
     emit_html_report,
     emit_json_report,
     emit_junit_xml,
@@ -94,7 +95,7 @@ def run(
 
     grids = config.study.refinement.values
     h_vals = []
-    errors = []
+    errors_by_norm = {n: [] for n in config.study.norms}
     solutions = []
 
     console.print(f"[cyan]Executing {len(grids)} cases...[/cyan]")
@@ -176,7 +177,18 @@ def run(
                 else:
                     measures = np.full_like(u_num, h_val)
                     
-            err = compute_l2_norm(u_num - u_exact, measures)
+            err_diff = u_num - u_exact
+            for norm_name in config.study.norms:
+                if norm_name == "L1":
+                    err = compute_l1_norm(err_diff, measures)
+                elif norm_name == "L2":
+                    err = compute_l2_norm(err_diff, measures)
+                elif norm_name == "Linf":
+                    err = compute_linf_norm(err_diff)
+                else:
+                    console.print(f"[bold yellow]Warning: unknown norm {norm_name}[/]")
+                    continue
+                errors_by_norm[norm_name].append(err)
 
             if config.checks.conservation:
                 from vvkit.checks.conservation import check_conservation
@@ -193,7 +205,6 @@ def run(
                             console.print(f"[bold yellow]Conservation check failed for {cons_cfg.quantity} on {case.case_id} (imbalance: {cons_res.final_imbalance:.2e})[/]")
 
             h_vals.append(h_val)
-            errors.append(err)
             solutions.append(u_num.flatten()[len(u_num.flatten())//2]) # Sample center point for GCI
 
 
@@ -204,69 +215,93 @@ def run(
     console.print("[cyan]Computing convergence metrics...[/cyan]")
 
     from vvkit.convergence.diagnostics import detect_roundoff_floor
-    errors_arr = np.array(errors)
-    min_idx = detect_roundoff_floor(errors_arr)
-    
-    if min_idx < len(errors_arr) - 1:
-        excluded_count = len(errors_arr) - min_idx - 1
-        console.print(f"[bold yellow]Warning: Round-off floor detected at grid {grids[min_idx]}. Excluding {excluded_count} finer grids from metrics.[/bold yellow]")
-        h_vals_fit = h_vals[:min_idx + 1]
-        errors_fit = errors[:min_idx + 1]
-        sols_fit = solutions[:min_idx + 1]
-        grids_fit = grids[:min_idx + 1]
-    else:
-        h_vals_fit = h_vals
-        errors_fit = errors
-        sols_fit = solutions
-        grids_fit = grids
+    norm_summaries = []
+    fitted_slopes = {}
+    excluded_idxs = {}
 
-    fit = compute_least_squares_order(np.array(h_vals_fit), np.array(errors_fit))
-    
-    if len(sols_fit) >= 3:
-        gci = compute_gci(
-            f1=sols_fit[-1],
-            f2=sols_fit[-2],
-            f3=sols_fit[-3],
-            r21=grids_fit[-1]/grids_fit[-2],
-            r32=grids_fit[-2]/grids_fit[-3],
-            p=fit.order,
-        )
-    elif len(sols_fit) == 2:
-        gci = compute_gci(
-            f1=sols_fit[-1],
-            f2=sols_fit[-2],
-            f3=None,
-            r21=grids_fit[-1]/grids_fit[-2],
-            p=fit.order,
-        )
-    else:
-        console.print("[bold red]Not enough points for GCI.[/bold red]")
-        raise typer.Exit(code=1)
+    for norm_name in config.study.norms:
+        errors_arr = np.array(errors_by_norm[norm_name])
+        if len(errors_arr) == 0:
+            continue
+            
+        min_idx = detect_roundoff_floor(errors_arr)
+        
+        if min_idx < len(errors_arr) - 1:
+            excluded_count = len(errors_arr) - min_idx - 1
+            if norm_name == config.study.norms[0]:
+                console.print(f"[bold yellow]Warning ({norm_name}): Round-off floor detected at grid {grids[min_idx]}. Excluding {excluded_count} finer grids from metrics.[/bold yellow]")
+            h_vals_fit = h_vals[:min_idx + 1]
+            errors_fit = errors_by_norm[norm_name][:min_idx + 1]
+            sols_fit = solutions[:min_idx + 1]
+            grids_fit = grids[:min_idx + 1]
+            excluded_idxs[norm_name] = min_idx
+        else:
+            h_vals_fit = h_vals
+            errors_fit = errors_by_norm[norm_name]
+            sols_fit = solutions
+            grids_fit = grids
+            excluded_idxs[norm_name] = None
 
-    passed = bool(abs(fit.order - config.study.expected_order) <= config.study.order_tolerance)
+        fit = compute_least_squares_order(np.array(h_vals_fit), np.array(errors_fit))
+        fitted_slopes[norm_name] = fit.order
+        
+        if len(sols_fit) >= 3:
+            gci = compute_gci(
+                f1=sols_fit[-1],
+                f2=sols_fit[-2],
+                f3=sols_fit[-3],
+                r21=grids_fit[-1]/grids_fit[-2],
+                r32=grids_fit[-2]/grids_fit[-3],
+                p=fit.order,
+            )
+        elif len(sols_fit) == 2:
+            gci = compute_gci(
+                f1=sols_fit[-1],
+                f2=sols_fit[-2],
+                f3=None,
+                r21=grids_fit[-1]/grids_fit[-2],
+                p=fit.order,
+            )
+        else:
+            console.print("[bold red]Not enough points for GCI.[/bold red]")
+            raise typer.Exit(code=1)
+
+        passed = bool(abs(fit.order - config.study.expected_order) <= config.study.order_tolerance)
+        asymp_val = float(gci.asymptotic_ratio) if gci.asymptotic_ratio is not None else None
+        
+        norm_summaries.append(NormResultSummary(
+            norm_name=norm_name,
+            observed_order=float(fit.order),
+            expected_order=config.study.expected_order,
+            order_passed=passed,
+            gci_fine=float(gci.gci_fine),
+            asymptotic_ratio=asymp_val,
+            is_asymptotic=bool(gci.is_asymptotic),
+            convergence_state=str(gci.convergence_state.value),
+        ))
+        
+        expected = config.study.expected_order
+        console.print(f"  [{norm_name}] -> Observed Order: {fit.order:.3f} (Expected: {expected:.3f}), R^2: {fit.r_squared:.4f}")
+
+    all_passed = all(ns.order_passed for ns in norm_summaries)
+    verdict_str = "[bold green]PASSED[/]" if all_passed else "[bold red]FAILED[/]"
+    console.print(f"  -> Overall Verdict: {verdict_str}")
 
     report_dir = Path(config.report.output_dir)
     plot_path = report_dir / f"{config.name}_plot.png"
 
     generate_convergence_plot(
         np.array(h_vals),
-        np.array(errors),
-        fit.order,
+        errors_by_norm=errors_by_norm,
+        fitted_slopes=fitted_slopes,
         expected_slope=config.study.expected_order,
         output_path=plot_path,
-        excluded_idx=min_idx if min_idx < len(errors_arr) - 1 else None
+        excluded_idxs=excluded_idxs
     )
 
-    asymp_val = float(gci.asymptotic_ratio) if gci.asymptotic_ratio is not None else None
     summary = StudyResultSummary(
         name=config.name,
-        observed_order=float(fit.order),
-        expected_order=config.study.expected_order,
-        order_passed=passed,
-        gci_fine=float(gci.gci_fine),
-        asymptotic_ratio=asymp_val,
-        is_asymptotic=bool(gci.is_asymptotic),
-        convergence_state=str(gci.convergence_state.value),
+        norms=norm_summaries,
         plot_image_path=plot_path,
     )
 
@@ -277,13 +312,7 @@ def run(
     if "junit" in config.report.formats:
         emit_junit_xml(summary, report_dir / f"{config.name}.xml")
 
-    expected = config.study.expected_order
-    console.print(f"  -> Observed Order: {fit.order:.3f} (Expected: {expected:.3f})")
-    console.print(f"  -> R^2 Fit Quality: {fit.r_squared:.4f}")
-    verdict_str = "[bold green]PASSED[/]" if passed else "[bold red]FAILED[/]"
-    console.print(f"  -> Verdict: {verdict_str}")
-
-    if not passed:
+    if not all_passed:
         raise typer.Exit(code=1)
 
 
@@ -373,6 +402,10 @@ def report(
 
     data = json.loads(json_path.read_text(encoding="utf-8"))
     summary_data = data["summary"]
+    # We must deserialize the nested norms objects explicitly or let the class do it.
+    if "norms" in summary_data:
+        summary_data["norms"] = [NormResultSummary(**ns) for ns in summary_data["norms"]]
+        
     # Handle plot path string
     if summary_data.get("plot_image_path"):
         summary_data["plot_image_path"] = Path(summary_data["plot_image_path"])

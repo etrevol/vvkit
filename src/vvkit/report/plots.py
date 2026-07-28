@@ -9,11 +9,11 @@ import numpy.typing as npt
 
 def generate_convergence_plot(
     h_values: npt.NDArray[np.float64],
-    errors: npt.NDArray[np.float64],
-    fitted_slope: float,
+    errors_by_norm: dict[str, npt.NDArray[np.float64]],
+    fitted_slopes: dict[str, float],
     expected_slope: float,
     output_path: Path,
-    excluded_idx: int | None = None,
+    excluded_idxs: dict[str, int | None] | None = None,
 ) -> None:
     """Generate log-log convergence plot comparing measured error vs grid size h.
 
@@ -21,19 +21,39 @@ def generate_convergence_plot(
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    fig, ax = plt.subplots(figsize=(6, 4.5), dpi=150)
-    label_meas = f"Measured (slope={fitted_slope:.2f})"
-    if excluded_idx is not None and excluded_idx < len(errors) - 1:
-        # Plot valid points
-        ax.loglog(h_values[:excluded_idx+1], errors[:excluded_idx+1], "o-", label=label_meas, color="#0284c7", lw=2)
-        # Plot excluded points (round-off floor)
-        ax.loglog(h_values[excluded_idx+1:], errors[excluded_idx+1:], "x--", label="Excluded (Round-off)", color="#ef4444", lw=1.5, markersize=8)
-    else:
-        ax.loglog(h_values, errors, "o-", label=label_meas, color="#0284c7", lw=2)
+    fig, ax = plt.subplots(figsize=(7, 5), dpi=150)
+    
+    if excluded_idxs is None:
+        excluded_idxs = {}
 
-    ref_errors = errors[-1] * ((h_values / h_values[-1]) ** expected_slope)
-    label_ref = f"Reference O(h^{expected_slope:.1f})"
-    ax.loglog(h_values, ref_errors, "--", label=label_ref, color="#64748b", lw=1.5)
+    colors = {"L1": "#16a34a", "L2": "#0284c7", "Linf": "#9333ea"}
+    markers = {"L1": "^-", "L2": "o-", "Linf": "s-"}
+
+    # Track maximum error to place the theoretical slope line
+    max_err_for_ref = 0.0
+
+    for norm_name, errors in errors_by_norm.items():
+        slope = fitted_slopes.get(norm_name, 0.0)
+        c = colors.get(norm_name, "#475569")
+        m = markers.get(norm_name, "d-")
+        
+        label_meas = f"{norm_name} (slope={slope:.2f})"
+        ex_idx = excluded_idxs.get(norm_name)
+        
+        if ex_idx is not None and ex_idx < len(errors) - 1:
+            ax.loglog(h_values[:ex_idx+1], errors[:ex_idx+1], m, label=label_meas, color=c, lw=2)
+            ax.loglog(h_values[ex_idx+1:], errors[ex_idx+1:], "x--", color="#ef4444", lw=1.5, markersize=8)
+        else:
+            ax.loglog(h_values, errors, m, label=label_meas, color=c, lw=2)
+            
+        if len(errors) > 0 and errors[-1] > max_err_for_ref:
+            max_err_for_ref = errors[-1]
+
+    # Draw reference slope starting from the max error value at the finest grid
+    if max_err_for_ref > 0:
+        ref_errors = max_err_for_ref * ((h_values / h_values[-1]) ** expected_slope)
+        label_ref = f"Reference O(h^{expected_slope:.1f})"
+        ax.loglog(h_values, ref_errors, "--", label=label_ref, color="#64748b", lw=1.5)
 
     ax.set_xlabel("Grid spacing h")
     ax.set_ylabel("Error norm")

@@ -9,8 +9,8 @@ import jinja2
 
 
 @dataclass
-class StudyResultSummary:
-    name: str
+class NormResultSummary:
+    norm_name: str
     observed_order: float
     expected_order: float
     order_passed: bool
@@ -18,6 +18,12 @@ class StudyResultSummary:
     asymptotic_ratio: float | None
     is_asymptotic: bool
     convergence_state: str
+
+
+@dataclass
+class StudyResultSummary:
+    name: str
+    norms: list[NormResultSummary]
     plot_image_path: Path | None = None
 
 
@@ -50,60 +56,78 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
     <meta charset="utf-8">
     <title>vvkit Report — {{ summary.name }}</title>
     <style>
-        body { font-family: sans-serif; margin: 40px; background: #0f172a; color: #f8fafc; }
-        h1 { color: #38bdf8; }
-        .card { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .badge-pass { background: #166534; color: #4ade80; padding: 4px; border-radius: 4px; }
-        .badge-fail { background: #991b1b; color: #f87171; padding: 4px; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 8px 12px; border-bottom: 1px solid #334155; text-align: left; }
-        th { color: #94a3b8; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #0f172a; color: #f8fafc; }
+        h1 { color: #38bdf8; font-weight: 600; border-bottom: 2px solid #334155; padding-bottom: 10px; }
+        .card { background: #1e293b; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .badge-pass { background: #14532d; color: #4ade80; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .badge-fail { background: #7f1d1d; color: #f87171; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.95em; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #334155; text-align: center; }
+        th { color: #94a3b8; font-weight: 600; background: #0f172a; border-radius: 4px; }
+        td:first-child, th:first-child { text-align: left; }
         .plot-container { text-align: center; margin-top: 20px; }
         .plot-container img { max-width: 100%; border-radius: 8px; border: 1px solid #334155; }
+        .alert-warning { background: #451a03; border-left: 4px solid #f59e0b; padding: 12px; margin-top: 15px; border-radius: 4px; }
+        .alert-critical { background: #4c0519; border-left: 4px solid #e11d48; padding: 12px; margin-top: 15px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <h1>vvkit Verification Report: {{ summary.name }}</h1>
+    
     <div class="card">
-        <h2>Summary Verdict:
-            {% if summary.order_passed %}
-            <span class="badge-pass">PASSED</span>
-            {% else %}
-            <span class="badge-fail">FAILED</span>
-            {% endif %}
-        </h2>
+        <h2>Metrics Dashboard</h2>
         <table>
-            <tr><th>Observed Order</th><td>{{ "%.3f"|format(summary.observed_order) }}</td></tr>
-            <tr><th>Expected Order</th><td>{{ "%.3f"|format(summary.expected_order) }}</td></tr>
-            <tr><th>GCI Fine Grid</th><td>{{ "%.2e"|format(summary.gci_fine) }}</td></tr>
-            <tr><th>Convergence State</th><td>{{ summary.convergence_state }}</td></tr>
             <tr>
+                <th>Norm</th>
+                <th>Observed Order</th>
+                <th>Expected Order</th>
+                <th>GCI (Fine)</th>
                 <th>Asymptotic Ratio (R)</th>
+                <th>Convergence State</th>
+                <th>Verdict</th>
+            </tr>
+            {% for norm in summary.norms %}
+            <tr>
+                <td><strong>{{ norm.norm_name }}</strong></td>
+                <td>{{ "%.3f"|format(norm.observed_order) }}</td>
+                <td>{{ "%.3f"|format(norm.expected_order) }}</td>
+                <td>{{ "%.2e"|format(norm.gci_fine) }}</td>
                 <td>
-                    {% if summary.asymptotic_ratio %}
-                    {{ "%.3f"|format(summary.asymptotic_ratio) }}
+                    {% if norm.asymptotic_ratio %}
+                    {{ "%.3f"|format(norm.asymptotic_ratio) }}
                     {% else %}
                     N/A
                     {% endif %}
                 </td>
+                <td>{{ norm.convergence_state }}</td>
+                <td>
+                    {% if norm.order_passed %}
+                    <span class="badge-pass">PASSED</span>
+                    {% else %}
+                    <span class="badge-fail">FAILED</span>
+                    {% endif %}
+                </td>
             </tr>
+            {% endfor %}
         </table>
 
-        {% if summary.convergence_state == 'oscillatory' %}
-        <div style="background: #451a03; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 20px;">
-            <strong>Warning:</strong> Convergence is oscillatory (R_c < 0). GCI estimates may be unreliable.
-        </div>
-        {% elif summary.convergence_state == 'divergent' %}
-        <div style="background: #4c0519; border-left: 4px solid #e11d48; padding: 10px; margin-top: 20px;">
-            <strong>Critical:</strong> Study is divergent (|R_c| > 1). The discretization has failed to converge.
-        </div>
-        {% endif %}
-        
-        {% if not summary.is_asymptotic and summary.asymptotic_ratio %}
-        <div style="background: #451a03; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 20px;">
-            <strong>Warning:</strong> Solutions are outside the asymptotic range (|R - 1| > 0.1). Order estimates are unreliable.
-        </div>
-        {% endif %}
+        {% for norm in summary.norms %}
+            {% if norm.convergence_state == 'oscillatory' %}
+            <div class="alert-warning">
+                <strong>Warning ({{ norm.norm_name }}):</strong> Convergence is oscillatory (R_c &lt; 0). GCI estimates may be unreliable.
+            </div>
+            {% elif norm.convergence_state == 'divergent' %}
+            <div class="alert-critical">
+                <strong>Critical ({{ norm.norm_name }}):</strong> Study is divergent (|R_c| > 1). The discretization has failed to converge.
+            </div>
+            {% endif %}
+            
+            {% if not norm.is_asymptotic and norm.asymptotic_ratio %}
+            <div class="alert-warning">
+                <strong>Warning ({{ norm.norm_name }}):</strong> Solutions are outside the asymptotic range (|R - 1| > 0.1). Order estimates are unreliable.
+            </div>
+            {% endif %}
+        {% endfor %}
     </div>
 
     {% if plot_b64 %}
@@ -122,18 +146,23 @@ def emit_html_report(summary: StudyResultSummary, output_path: Path) -> None:
 def emit_junit_xml(summary: StudyResultSummary, output_path: Path) -> None:
     """Emit JUnit XML for CI integration."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    failures = 0 if summary.order_passed else 1
-    failure_element = ""
-    if not summary.order_passed:
-        err_msg = f"Observed order {summary.observed_order:.2f} != {summary.expected_order:.2f}"
-        failure_element = f'<failure message="{err_msg}"/>'
+    
+    testcases = ""
+    failures = 0
+    for norm in summary.norms:
+        failure_element = ""
+        if not norm.order_passed:
+            failures += 1
+            err_msg = f"Observed order {norm.observed_order:.2f} != {norm.expected_order:.2f}"
+            failure_element = f'\n            <failure message="{err_msg}"/>'
+            
+        testcases += f"""
+        <testcase name="{summary.name}_{norm.norm_name}" classname="vvkit.convergence">{failure_element}
+        </testcase>"""
 
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-    <testsuite name="vvkit" tests="1" failures="{failures}" errors="0">
-        <testcase name="{summary.name}" classname="vvkit.convergence">
-            {failure_element}
-        </testcase>
+    <testsuite name="vvkit" tests="{len(summary.norms)}" failures="{failures}" errors="0">{testcases}
     </testsuite>
 </testsuites>
 """
