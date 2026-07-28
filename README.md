@@ -100,6 +100,16 @@ uv run python examples/demo/run_pitch.py --auto
 
 The reports will be written to `examples/demo/workdir_{case_name}/reports/`. Open the `.html` files in any web browser to view the convergence plots and diagnostic metrics.
 
+### Athena++ Sod Shock Tube Demo
+
+We also provide a fully functional example of using `vvkit` with the real-world MHD solver [Athena++](https://github.com/PrincetonUniversity/athena). The example demonstrates how to wrap a compiled C++ binary using `CommandAdapter` via WSL and use a custom analytical solution (SymPy `Piecewise`) to verify the Sod shock tube problem's convergence rate.
+
+To run the Athena++ demo (requires WSL and Athena++ installed in WSL):
+```bash
+cd examples/athena++/sod_tube
+vv run --config-path vvcase.yaml
+```
+
 ---
 
 ## Verification Mathematics & Standard References

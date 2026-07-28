@@ -16,7 +16,7 @@
 
 from vvkit.runner.adapters import CaseSpec, SolverAdapter, SolverResult
 from vvkit.runner.matrix import CallableAdapter, CommandAdapter
-from vvkit.runner.readers import read_csv_output, read_npz_output
+from vvkit.runner.readers import get_reader, read_csv_output, read_hdf5_output, read_npz_output, read_txt_output
 
 __all__ = [
     "CaseSpec",
@@ -24,6 +24,7 @@ __all__ = [
     "SolverAdapter",
     "CallableAdapter",
     "CommandAdapter",
-    "read_npz_output",
     "read_csv_output",
+    "read_npz_output",
+    "read_txt_output",
 ]

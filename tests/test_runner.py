@@ -26,6 +26,7 @@ from vvkit.runner import (
     SolverResult,
     read_csv_output,
     read_npz_output,
+    read_txt_output,
 )
 
 
@@ -121,9 +122,16 @@ def test_readers(tmp_path: Path) -> None:
     # Test CSV reader
     csv_file = tmp_path / "out.csv"
     csv_file.write_text("x,u\n0.0,1.0\n1.0,2.0\n", encoding="utf-8")
-    csv_data = read_csv_output(csv_file, ["x"], ["u"])
+    csv_data = read_csv_output(csv_file, {"x": "x"}, {"u": "u"})
     assert "x" in csv_data["coords"]
     assert "u" in csv_data["fields"]
+
+    # Test txt reader
+    txt_file = tmp_path / "out.txt"
+    txt_file.write_text("0.0 1.0\n1.0 2.0\n", encoding="utf-8")
+    txt_data = read_txt_output(txt_file, {"x": "0"}, {"u": "1"})
+    assert "x" in txt_data["coords"]
+    assert "u" in txt_data["fields"]
 
 
 def test_command_adapter(tmp_path: Path) -> None:

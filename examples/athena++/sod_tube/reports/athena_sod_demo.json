@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "summary": {
+    "name": "athena_sod_demo",
+    "norms": [
+      {
+        "norm_name": "L1",
+        "observed_order": 0.9226889239742837,
+        "expected_order": 1.0,
+        "std_err": 0.024964853900407938,
+        "r_squared": 0.9978086287833493,
+        "order_passed": true,
+        "gci_fine": 0.000326580233065088,
+        "asymptotic_ratio": 0.42382341747600744,
+        "is_asymptotic": false,
+        "convergence_state": "divergent",
+        "pairwise_orders": [
+          1.087535932253696,
+          0.887424670550814,
+          0.8945424965387463,
+          0.8529579369833825
+        ],
+        "errors_per_grid": [
+          0.007374069448869059,
+          0.003469974525721385,
+          0.001875792701645588,
+          0.001009022191737157,
+          0.0005586435564312826
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\athena_sod_demo_plot.png",
+    "grid_sizes": [
+      0.015625,
+      0.0078125,
+      0.00390625,
+      0.001953125,
+      0.0009765625
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "256/128/64",
+        "gci_fine": 1.814334628137656e-05,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 39.077420843272236,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.013499480789185211,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "512/256/128",
+        "gci_fine": 0.0002623807000694657,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.03647778508261705,
+        "is_asymptotic": false,
+        "convergence_condition_rc": -14.461538461556527,
+        "convergence_state": "divergent"
+      },
+      {
+        "grid_triplet": "1024/512/256",
+        "gci_fine": 0.000326580233065088,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.42382341747600744,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 1.244680851063456,
+        "convergence_state": "divergent"
+      }
+    ],
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T16:08:16.264823+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: athena_sod_demo\n\nsolver:\n  type: command\n  command: [\"cmd\", \"/c\", \"..\\\\..\\\\run_sod.bat\", \"{input_file}\"]\n  template: athinput.sod.template\n  reader:\n    type: txt\n    file: result.tab\n    coords: {x: \"1\"}\n    fields: {rho: \"2\", press: \"3\", u: \"4\"}\n\nmms:\n  operator: \"None\"\n  solution: \"Piecewise((1.0, x <= -0.2958039891549808), ( (2/2.4 - 0.4/(2.4*1.1832159566199232) * (x/0.25))**(2/0.4), x <= -0.017568203140295863 ), (0.42631942817849516, x <= 0.23186315501223745), (0.265573711705307, x <= 0.4380389330075445), (0.125, True))\"\n  symbols: {}\n  domain: {x: [-0.5, 0.5]}\n\nstudy:\n  type: spatial\n  refinement:\n    parameter: nx1\n    values: [64, 128, 256, 512, 1024]\n  reference: cell_average\n  expected_order: 1.0\n  order_tolerance: 0.3\n  norms: [L1]\n  exclude_boundary_cells: 2\n  user_params: {}\n\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": null,
+    "conservation_results": []
+  }
+}

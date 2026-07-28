@@ -54,13 +54,13 @@ def read_npz_output(
 
 
 def read_csv_output(
-    csv_file: Path, coord_cols: list[str], field_cols: list[str]
+    csv_file: Path, coord_cols: dict[str, str], field_cols: dict[str, str]
 ) -> dict[str, Any]:
     """Read solution and coordinates from a CSV file."""
     arr = np.genfromtxt(csv_file, delimiter=",", names=True)
     names = arr.dtype.names or ()
-    coords = {c: arr[c] for c in coord_cols if c in names}
-    fields = {f: arr[f] for f in field_cols if f in names}
+    coords = {k: arr[c] for k, c in coord_cols.items() if c in names}
+    fields = {k: arr[f] for k, f in field_cols.items() if f in names}
     return {"fields": fields, "coords": coords, "cell_measures": None}
 
 
@@ -85,7 +85,7 @@ def read_hdf5_output(
 
 
 def read_txt_output(
-    txt_file: Path, coord_cols: list[str], field_cols: list[str]
+    txt_file: Path, coord_cols: dict[str, str], field_cols: dict[str, str]
 ) -> dict[str, Any]:
     """Read solution from plain-text columns without headers."""
     # Assuming the user provided columns in order, map names to indices for loadtxt
@@ -99,7 +99,7 @@ def read_txt_output(
 
     # Note: text columns reader expects the user to pass columns mapped as integers in strings
     # e.g., coords={"x": "0"}, fields={"u": "1"}
-    for k, col_idx_str in zip(coord_cols, coord_cols, strict=False):
+    for k, col_idx_str in coord_cols.items():
         # We handle parsing if the user passes lists of ints or string ints
         try:
             col_idx = int(col_idx_str)
@@ -107,7 +107,7 @@ def read_txt_output(
         except ValueError:
             pass  # Ignore invalid column mapping for text reader
 
-    for k, col_idx_str in zip(field_cols, field_cols, strict=False):
+    for k, col_idx_str in field_cols.items():
         try:
             col_idx = int(col_idx_str)
             fields[k] = arr[:, col_idx]

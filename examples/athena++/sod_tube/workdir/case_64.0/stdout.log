@@ -1,0 +1,13 @@
+
+Setup complete, entering main loop...
+
+cycle=0 time=0.0000000000000000e+00 dt=1.0564428184106458e-02
+
+
+Terminating on time limit
+time=2.5000000000000000e-01 cycle=43
+tlim=2.5000000000000000e-01 nlim=-1
+
+zone-cycles = 2752
+cpu time used  = 9.3199999999999999e-04
+zone-cycles/cpu_second = 2.9527896995708155e+06
