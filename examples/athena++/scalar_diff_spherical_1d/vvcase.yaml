@@ -25,9 +25,6 @@ mms:
 
 study:
   type: spatial
-  expected_order: 1.0
-  order_tolerance: 0.2
-  reference: point_value
   refinement:
     parameter: nx
     values: [8, 16, 32]

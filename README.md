@@ -12,7 +12,7 @@
 
 > **`pytest` proves your code runs. `vvkit` proves your discretization converges at the order you claim.**
 
-`vvkit` is the professional verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)**, systematic grid refinement sweeps, **Grid Convergence Index (GCI)** estimation per ASME V&V 20, discrete conservation budget checks, and regression baseline drift detection.
+`vvkit` is the professional verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)** ([Roache, 2002](https://doi.org/10.1115/1.1436090)), systematic grid refinement sweeps, **[Grid Convergence Index (GCI)](https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer)** estimation per [ASME V&V 20-2009](https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer), discrete conservation budget checks, and regression baseline drift detection.
 
 ## 📖 Comprehensive Documentation (Wiki)
 
