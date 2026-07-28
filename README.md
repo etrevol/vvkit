@@ -8,10 +8,21 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type Checking: mypy strict](https://img.shields.io/badge/mypy-strict-brightgreen.svg)](https://mypy.readthedocs.io/)
+[![Wiki](https://img.shields.io/badge/docs-wiki-brightgreen.svg)](https://github.com/etrevol/vvkit/wiki)
 
 > **`pytest` proves your code runs. `vvkit` proves your discretization converges at the order you claim.**
 
-`vvkit` is the verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)**, systematic grid refinement sweeps, **Grid Convergence Index (GCI)** estimation per ASME V&V 20, discrete conservation budget checks, and regression baseline drift detection.
+`vvkit` is the professional verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)**, systematic grid refinement sweeps, **Grid Convergence Index (GCI)** estimation per ASME V&V 20, discrete conservation budget checks, and regression baseline drift detection.
+
+## 📖 Comprehensive Documentation (Wiki)
+
+For detailed installation instructions, architectural overview, mathematical theory, and plugins, please visit the **[vvkit Wiki](https://github.com/etrevol/vvkit/wiki)**.
+
+- **[Setup Guide](https://github.com/etrevol/vvkit/wiki/Home)**: How to install and configure `vvkit`.
+- **[Mathematical Theory](https://github.com/etrevol/vvkit/wiki/Theory)**: Deep dive into the verification mathematics ($L_1$, $L_2$, $L_\infty$ norms, Grid Convergence Index).
+- **[Verification Suite Demos](https://github.com/etrevol/vvkit/wiki/Demos)**: Explanation of the Python verification suites.
+- **[Athena++ Integration](https://github.com/etrevol/vvkit/wiki/Athena++-Integration)**: Full documentation of the automated Athena++ MHD verification plugin.
+- **[Plugins and Adapters](https://github.com/etrevol/vvkit/wiki/Plugins-and-Adapters)**: How to write your own adapter for any C/C++/Fortran numerical solver.
 
 ---
 
@@ -31,6 +42,9 @@
   - `CallableAdapter`: Direct in-process Python solver functions.
   - `CommandAdapter`: External executable solvers driven via Jinja2 templated input files in isolated temporary workdirs.
   - Built-in readers for **NumPy (`.npz`)**, **HDF5 (`.h5`)**, **CSV**, **Text**, and custom callables via entry points.
+- **Athena++ Dedicated Plugin**:
+  - Seamless, zero-configuration bridging between Windows and WSL for native compilation and execution.
+  - Automatic `pathlib`-based output discovery and intelligent column mapping for Athena++ `.tab` dumps.
 - **Conservation & Invariant Checks**: Time-series discrete budget closure monitoring to pinpoint the exact time step where conservation departs from round-off bounds.
 - **CI-Ready Reporting**: Offline-capable HTML reports, machine-readable JSON contracts (`schema_version: 1`), and JUnit XML for continuous integration pipelines.
 - **Pytest Integration**: Native `@pytest.mark.convergence(case="...")` test marker support.
@@ -39,84 +53,23 @@
 
 ## Quickstart
 
-### 1. Installation
+Detailed setup instructions are available in the [Wiki Setup Guide](https://github.com/etrevol/vvkit/wiki/Home). 
+
+If you already have `uv` installed, simply:
 
 ```bash
-uv add vvkit
-```
+# Clone the repository with its wiki submodule
+git clone --recurse-submodules https://github.com/etrevol/vvkit.git
+cd vvkit
 
-### 2. Scaffold a Study Configuration
+# Install dependencies and sync virtual environment
+uv sync
 
-Generate an initial `vvcase.yaml`:
-
-```bash
-vv init
-```
-
-### 3. Run Verification Study
-
-Execute the study and view results:
-
-```bash
-vv run --config-path vvcase.yaml
-```
-
-### 4. Advanced: Generate MMS C/C++ Code
-
-```bash
-vv mms --config-path vvcase.yaml --language cpp --output src/mms_source.cpp
-```
-
----
-
-## Architecture Overview
-
-```text
-vvkit/
-  ├── mms/          # Symbolic MMS: operator DSL, source derivation, C/C++/Python emitters
-  ├── norms/        # Error norms (L1, L2, Linf), cell-average quadrature, weighting
-  ├── convergence/  # Order estimation, Roache iteration, GCI, asymptotic diagnostics
-  ├── runner/       # Solver adapters, case matrix expansion, execution pool
-  ├── checks/       # Conservation budget closure & invariant checks
-  ├── regression/   # Baseline store, tolerance comparison, drift detection
-  ├── report/       # Jinja2 HTML templates, matplotlib plots, JSON/JUnit emitters
-  ├── config/       # Pydantic models & validation
-  └── cli/          # Typer application CLI
-```
-
----
-
-## Interactive Demos & Examples
-
-The framework provides an exhaustive pitch demonstration suite in `examples/demo/`. This suite includes 7 diverse verification cases covering 1D, 2D, and 3D domains, Cartesian, Cylindrical, and Spherical coordinate systems, and linear and non-linear partial differential equations.
-
-For comprehensive documentation on the demonstration suite, including architectural details and execution instructions, please refer to the [Demonstration Suite Documentation](file:///d:/MyProjects/vvkit/examples/demo/README.md).
-
-To run the full demonstration suite and generate verification reports:
-
-```bash
+# Run the full internal Python demonstration suite
 uv run python examples/demo/run_pitch.py --auto
 ```
 
-The reports will be written to `examples/demo/workdir_{case_name}/reports/`. Open the `.html` files in any web browser to view the convergence plots and diagnostic metrics.
-
-### Athena++ Sod Shock Tube Demo
-
-We also provide a fully functional example of using `vvkit` with the real-world MHD solver [Athena++](https://github.com/PrincetonUniversity/athena). The example demonstrates how to wrap a compiled C++ binary using `CommandAdapter` via WSL and use a custom analytical solution (SymPy `Piecewise`) to verify the Sod shock tube problem's convergence rate.
-
-To run the Athena++ demo (requires WSL and Athena++ installed in WSL):
-```bash
-cd examples/athena++/sod_tube
-vv run --config-path vvcase.yaml
-```
-
----
-
-## Verification Mathematics & Standard References
-
-- Roache, P. J. (1998). *Verification and Validation in Computational Science and Engineering*.
-- Roache, P. J. (2002). "Code Verification by the Method of Manufactured Solutions". *Journal of Fluids Engineering*.
-- ASME V&V 20-2009. *Standard for Verification and Validation in Computational Fluid Dynamics and Heat Transfer*.
+The reports will be written to `examples/demo/workdir_{case_name}/reports/`. Open the `.html` files in any web browser to view the interactive Plotly convergence plots and diagnostic metrics!
 
 ---
 
