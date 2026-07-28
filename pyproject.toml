@@ -40,6 +40,9 @@ vv = "vvkit.cli.main:app"
 [project.entry-points."pytest11"]
 vvkit = "vvkit.pytest_plugin"
 
+[project.entry-points."vvkit.adapters"]
+"athena++" = "vvkit.plugins.athena:AthenaPlusPlusAdapter"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

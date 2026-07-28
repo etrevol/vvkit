@@ -29,11 +29,12 @@ class ReaderConfig(BaseModel):
 
 
 class SolverConfig(BaseModel):
-    type: Literal["callable", "command"] = "command"
+    type: str = "command"
     command: list[str] = Field(default_factory=list)
     template: str | None = None
     reader: ReaderConfig | None = None
     timeout_s: float = 600.0
+    plugin_args: dict[str, Any] = Field(default_factory=dict)
 
 
 class MMSConfig(BaseModel):

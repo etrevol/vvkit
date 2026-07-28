@@ -69,9 +69,9 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T16:08:16.264823+00:00",
+      "timestamp": "2026-07-28T17:25:45.157240+00:00",
       "python_version": "3.12.1",
-      "config_echo": "version: 1\nname: athena_sod_demo\n\nsolver:\n  type: command\n  command: [\"cmd\", \"/c\", \"..\\\\..\\\\run_sod.bat\", \"{input_file}\"]\n  template: athinput.sod.template\n  reader:\n    type: txt\n    file: result.tab\n    coords: {x: \"1\"}\n    fields: {rho: \"2\", press: \"3\", u: \"4\"}\n\nmms:\n  operator: \"None\"\n  solution: \"Piecewise((1.0, x <= -0.2958039891549808), ( (2/2.4 - 0.4/(2.4*1.1832159566199232) * (x/0.25))**(2/0.4), x <= -0.017568203140295863 ), (0.42631942817849516, x <= 0.23186315501223745), (0.265573711705307, x <= 0.4380389330075445), (0.125, True))\"\n  symbols: {}\n  domain: {x: [-0.5, 0.5]}\n\nstudy:\n  type: spatial\n  refinement:\n    parameter: nx1\n    values: [64, 128, 256, 512, 1024]\n  reference: cell_average\n  expected_order: 1.0\n  order_tolerance: 0.3\n  norms: [L1]\n  exclude_boundary_cells: 2\n  user_params: {}\n\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+      "config_echo": "version: 1\nname: athena_sod_demo\n\nsolver:\n  type: athena++\n  template: athinput.sod.template\n  plugin_args:\n    executable: \"/home/etrevol/athena-collab/bin/athena\"\n    use_wsl: true\n    wsl_distro: Ubuntu\n\nmms:\n  operator: \"None\"\n  solution: \"Piecewise((1.0, x <= -0.2958039891549808), ( (2/2.4 - 0.4/(2.4*1.1832159566199232) * (x/0.25))**(2/0.4), x <= -0.017568203140295863 ), (0.42631942817849516, x <= 0.23186315501223745), (0.265573711705307, x <= 0.4380389330075445), (0.125, True))\"\n  symbols: {}\n  domain: {x: [-0.5, 0.5]}\n\nstudy:\n  type: spatial\n  refinement:\n    parameter: nx1\n    values: [64, 128, 256, 512, 1024]\n  reference: cell_average\n  expected_order: 1.0\n  order_tolerance: 0.3\n  norms: [L1]\n  exclude_boundary_cells: 2\n  user_params: {}\n\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },
     "mms_diagnostics": null,
     "conservation_results": []

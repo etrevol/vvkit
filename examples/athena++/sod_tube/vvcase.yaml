@@ -2,14 +2,12 @@ version: 1
 name: athena_sod_demo
 
 solver:
-  type: command
-  command: ["cmd", "/c", "..\\..\\run_sod.bat", "{input_file}"]
+  type: athena++
   template: athinput.sod.template
-  reader:
-    type: txt
-    file: result.tab
-    coords: {x: "1"}
-    fields: {rho: "2", press: "3", u: "4"}
+  plugin_args:
+    executable: "/home/etrevol/athena-collab/bin/athena"
+    use_wsl: true
+    wsl_distro: Ubuntu
 
 mms:
   operator: "None"

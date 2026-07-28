@@ -116,8 +116,9 @@ class CommandAdapter:
         )
 
 
-def create_adapter(config_solver: Any) -> CommandAdapter | CallableAdapter:
+def create_adapter(config_solver: Any) -> Any:
     """Factory to create an adapter from SolverConfig."""
+    import importlib.metadata
     from vvkit.runner.readers import get_reader
 
     if config_solver.type == "callable":
@@ -146,11 +147,19 @@ def create_adapter(config_solver: Any) -> CommandAdapter | CallableAdapter:
                 return base_reader(file_path)
         reader_func = wrapped_reader
 
-    template_path = Path(config_solver.template) if config_solver.template else None
-
-    return CommandAdapter(
-        command_template=config_solver.command,
-        input_template_path=template_path,
-        reader_func=reader_func,
-        timeout_s=config_solver.timeout_s,
-    )
+    if config_solver.type == "command":
+        template_path = Path(config_solver.template) if config_solver.template else None
+        return CommandAdapter(
+            command_template=config_solver.command,
+            input_template_path=template_path,
+            reader_func=reader_func,
+            timeout_s=config_solver.timeout_s,
+        )
+        
+    eps = importlib.metadata.entry_points(group="vvkit.adapters")
+    for ep in eps:
+        if ep.name == config_solver.type:
+            adapter_cls = ep.load()
+            return adapter_cls(config_solver)
+            
+    raise ValueError(f"Unknown solver adapter type: {config_solver.type}")

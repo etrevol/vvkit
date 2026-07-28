@@ -140,11 +140,15 @@ def run(
 
             if config.solver.reader and config.solver.reader.fields:
                 field_names = list(config.solver.reader.fields.keys())
+            elif res.solution_fields:
+                field_names = list(res.solution_fields.keys())
             else:
                 field_names = ["u"]
                 
             if config.solver.reader and config.solver.reader.coords:
                 coord_names = list(config.solver.reader.coords.keys())
+            elif res.coordinates:
+                coord_names = list(res.coordinates.keys())
             else:
                 coord_names = ["x"]
 

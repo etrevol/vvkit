@@ -12,5 +12,5 @@ time=2.5000000000000000e-01 cycle=350
 tlim=2.5000000000000000e-01 nlim=-1
 
 zone-cycles = 179200
-cpu time used  = 2.1474000000000000e-02
-zone-cycles/cpu_second = 8.3449753189904066e+06
+cpu time used  = 2.2307000000000000e-02
+zone-cycles/cpu_second = 8.0333527592235617e+06
