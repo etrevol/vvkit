@@ -2,13 +2,13 @@
   "schema_version": 1,
   "summary": {
     "name": "advection_1d",
-    "observed_order": 1.9999999999996603,
+    "observed_order": 1.999832553505233,
     "expected_order": 2.0,
     "order_passed": true,
-    "gci_fine": 0.010221536071663921,
-    "asymptotic_ratio": 0.1250458821455344,
+    "gci_fine": 0.005113435255529835,
+    "asymptotic_ratio": 0.4998745533648428,
     "is_asymptotic": false,
-    "convergence_state": "divergent",
+    "convergence_state": "monotonic",
     "plot_image_path": "reports\\advection_1d_plot.png"
   }
 }

@@ -84,15 +84,9 @@ vvkit/
 
 ## Interactive Demos & Examples
 
-The framework provides an exhaustive pitch demonstration suite in `examples/demo/`:
+The framework provides an exhaustive pitch demonstration suite in `examples/demo/`. This suite includes 7 diverse verification cases covering 1D, 2D, and 3D domains, Cartesian, Cylindrical, and Spherical coordinate systems, and linear and non-linear partial differential equations.
 
-1. **1D Advection-Diffusion 2nd-Order**: Validates $O(\Delta x^2)$ spatial convergence in 1D Cartesian.
-2. **1D Temporal Diffusion**: Verifies 1st-order temporal convergence (Forward Euler).
-3. **2D Poisson Spatial Convergence**: Proves full 2D tensor-product support (X, Y matrices).
-4. **1D Spherical Coordinates**: Simulates radial convergence using $r^2 dr$ cell measures for proper $L_2$ mass norm.
-5. **2D Cylindrical Coordinates**: Simulates spatial convergence in $(r, z)$ geometry.
-6. **3D Cartesian Poisson**: Validates memory boundary and large-scale $L_2$ evaluation over $(X, Y, Z)$ domains.
-7. **1D Non-Linear Burgers Equation**: Validates symbolic operator substitution on non-linear terms like $u \partial_x u$.
+For comprehensive documentation on the demonstration suite, including architectural details and execution instructions, please refer to the [Demonstration Suite Documentation](file:///d:/MyProjects/vvkit/examples/demo/README.md).
 
 To run the full demonstration suite and generate verification reports:
 
@@ -100,7 +94,7 @@ To run the full demonstration suite and generate verification reports:
 uv run python examples/demo/run_pitch.py --auto
 ```
 
-The reports will be written to `examples/demo/workdir/reports/`. Open the `.html` files in any web browser to view the convergence plots and diagnostic metrics.
+The reports will be written to `examples/demo/workdir_{case_name}/reports/`. Open the `.html` files in any web browser to view the convergence plots and diagnostic metrics.
 
 ---
 

@@ -33,6 +33,13 @@ def compute_gci(
 ) -> GCIResult:
     """Compute Grid Convergence Index per ASME V&V 20 / Roache.
 
+    Args:
+        f1: Solution on the fine grid (h_1).
+        f2: Solution on the medium grid (h_2).
+        f3: Solution on the coarse grid (h_3).
+        r21: Grid refinement ratio h_2 / h_1 (must be > 1).
+        r32: Grid refinement ratio h_3 / h_2 (must be > 1).
+
     Convergence condition Rc = e21 / e32:
     - 0 < Rc < 1: monotonic convergence
     - Rc < 0: oscillatory convergence

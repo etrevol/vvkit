@@ -144,10 +144,28 @@ def run(
             eval_symbols = [sp.Symbol(c) for c in coord_names]
             u_exact_func = sp.lambdify(eval_symbols, u_sym_eval, modules="numpy")
             
-            kwargs = {c: res.coordinates[c] for c in coord_names}
-            u_exact = u_exact_func(**kwargs)
-            if np.isscalar(u_exact):
-                u_exact = np.full_like(u_num, u_exact)
+            if config.study.reference == "cell_average":
+                from vvkit.norms.quadrature import cell_average_nd
+                bounds_list = []
+                for c in coord_names:
+                    c_vals = res.coordinates[c]
+                    c_vals_flat = c_vals.ravel()
+                    domain_val = config.mms.domain.get(c, [0.0, 1.0])
+                    h_c = (domain_val[1] - domain_val[0]) / n
+                    c_bounds = np.zeros((len(c_vals_flat), 2), dtype=np.float64)
+                    c_bounds[:, 0] = c_vals_flat - h_c / 2.0
+                    c_bounds[:, 1] = c_vals_flat + h_c / 2.0
+                    bounds_list.append(c_bounds)
+                
+                u_exact = cell_average_nd(u_exact_func, bounds_list, order=config.study.quadrature_order)
+                u_exact = u_exact.reshape(u_num.shape)
+                if np.isscalar(u_exact):
+                    u_exact = np.full_like(u_num, u_exact)
+            else:
+                kwargs = {c: res.coordinates[c] for c in coord_names}
+                u_exact = u_exact_func(**kwargs)
+                if np.isscalar(u_exact):
+                    u_exact = np.full_like(u_num, u_exact)
 
             if res.cell_measures is not None:
                 measures = res.cell_measures
@@ -160,9 +178,24 @@ def run(
                     
             err = compute_l2_norm(u_num - u_exact, measures)
 
+            if config.checks.conservation:
+                from vvkit.checks.conservation import check_conservation
+                for cons_cfg in config.checks.conservation:
+                    if cons_cfg.field in res.solution_fields:
+                        field_data = res.solution_fields[cons_cfg.field]
+                        q_final = float(np.sum(field_data * measures))
+                        
+                        # Use the exact solution as the reference initial state mass
+                        q_initial = float(np.sum(u_exact * measures))
+                        
+                        cons_res = check_conservation(np.array([q_initial, q_final]), factor=cons_cfg.factor)
+                        if not cons_res.is_conserved:
+                            console.print(f"[bold yellow]Conservation check failed for {cons_cfg.quantity} on {case.case_id} (imbalance: {cons_res.final_imbalance:.2e})[/]")
+
             h_vals.append(h_val)
             errors.append(err)
             solutions.append(u_num.flatten()[len(u_num.flatten())//2]) # Sample center point for GCI
+
 
         except Exception as e:
             console.print(f"[bold red]Failed during processing {case.case_id}: {e}[/]")
@@ -172,9 +205,9 @@ def run(
 
     fit = compute_least_squares_order(np.array(h_vals), np.array(errors))
     gci = compute_gci(
-        solutions[-3],
-        solutions[-2],
-        solutions[-1],
+        f1=solutions[-1],
+        f2=solutions[-2],
+        f3=solutions[-3],
         r21=grids[-1]/grids[-2],
         r32=grids[-2]/grids[-3],
         p=fit.order,
@@ -249,11 +282,14 @@ def generate_mms(
     # Very basic evaluation for demo purposes:
     # A complete MMS engine would parse the DSL.
     try:
-        from sympy.parsing.sympy_parser import parse_expr
-        import re
-        op_str_replaced = re.sub(r'u\([^)]+\)', f"({config.mms.solution})", op_str)
-        op_expr = parse_expr(op_str_replaced)
-        op_expr = op_expr.subs(config.mms.symbols).doit()
+        from vvkit.mms.dsl import parse_mms_problem
+        prob = parse_mms_problem(
+            config.mms.operator,
+            config.mms.solution,
+            symbols_dict=config.mms.symbols,
+            domain_dict=config.mms.domain,
+        )
+        op_expr = prob.source_term
 
         if language == "c":
             code = emit_c_source(op_expr)

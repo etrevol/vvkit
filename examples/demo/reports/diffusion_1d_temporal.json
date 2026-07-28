@@ -5,10 +5,10 @@
     "observed_order": 0.9999999999998983,
     "expected_order": 1.0,
     "order_passed": true,
-    "gci_fine": 0.003086526064360278,
-    "asymptotic_ratio": 0.250000000000012,
-    "is_asymptotic": false,
-    "convergence_state": "divergent",
+    "gci_fine": 0.0015432630321801043,
+    "asymptotic_ratio": 1.000000000000093,
+    "is_asymptotic": true,
+    "convergence_state": "monotonic",
     "plot_image_path": "reports\\diffusion_1d_temporal_plot.png"
   }
 }

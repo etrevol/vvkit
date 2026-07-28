@@ -2,13 +2,13 @@
   "schema_version": 1,
   "summary": {
     "name": "poisson_2d",
-    "observed_order": 2.0000000000000044,
+    "observed_order": 1.9997373245749042,
     "expected_order": 2.0,
     "order_passed": true,
-    "gci_fine": 0.01021525134438914,
-    "asymptotic_ratio": 0.12510362422938423,
+    "gci_fine": 0.005113101024412884,
+    "asymptotic_ratio": 0.4996768156535689,
     "is_asymptotic": false,
-    "convergence_state": "divergent",
+    "convergence_state": "monotonic",
     "plot_image_path": "reports\\poisson_2d_plot.png"
   }
 }
