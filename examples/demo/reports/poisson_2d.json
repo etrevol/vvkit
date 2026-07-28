@@ -7,33 +7,112 @@
         "norm_name": "L1",
         "observed_order": 2.0011934710683525,
         "expected_order": 2.0,
+        "std_err": 0.0004375003149098491,
+        "r_squared": 0.9999999044108633,
         "order_passed": true,
         "gci_fine": 0.00510622535803444,
         "asymptotic_ratio": 0.4991727343664485,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          2.0028504581476017,
+          2.000712293961895,
+          2.0001780534643805
+        ],
+        "errors_per_grid": [
+          0.0028928367257094315,
+          0.000721781684786989,
+          0.00018035635285153532,
+          4.508352378468418e-05
+        ]
       },
       {
         "norm_name": "L2",
         "observed_order": 1.9997373245749042,
         "expected_order": 2.0,
+        "std_err": 9.625752113715347e-05,
+        "r_squared": 0.9999999953660277,
         "order_passed": true,
         "gci_fine": 0.005113101024412884,
         "asymptotic_ratio": 0.4996768156535689,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.9993727845030846,
+          1.9998431375217323,
+          1.9999607807176207
+        ],
+        "errors_per_grid": [
+          0.003557442977519596,
+          0.0008897474803844113,
+          0.00022246105670149308,
+          5.56167760821424e-05
+        ]
       },
       {
         "norm_name": "Linf",
         "observed_order": 1.995363404306677,
         "expected_order": 2.0,
+        "std_err": 0.0017003584232875262,
+        "r_squared": 0.9999985476666386,
         "order_passed": true,
         "gci_fine": 0.005133823621847296,
         "asymptotic_ratio": 0.5011940198290592,
         "is_asymptotic": false,
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.988922956907611,
+          1.997234620317627,
+          1.9993088970244763
+        ],
+        "errors_per_grid": [
+          0.0070465306857446786,
+          0.0017752105834580867,
+          0.0004446541493174916,
+          0.00011121680143111323
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\poisson_2d_plot.png",
+    "grid_sizes": [
+      0.0625,
+      0.03125,
+      0.015625,
+      0.0078125
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "64/32/16",
+        "gci_fine": 0.010203991669881373,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4979213004570389,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5016721970191969,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "128/64/32",
+        "gci_fine": 0.00510622535803444,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4991727343664485,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5004144969175385,
         "convergence_state": "monotonic"
       }
     ],
-    "plot_image_path": "reports\\poisson_2d_plot.png"
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T13:18:08.948471+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: poisson_2d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x, y: y}\n    fields: {u: u}\nmms:\n  operator: \"Derivative(u(x, y), (x, 2)) + Derivative(u(x, y), (y, 2))\"\n  solution: \"sin(pi*x)*sin(pi*y)\"\n  symbols: {}\n  domain: {x: [0.0, 1.0], y: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: poisson_2d\n  refinement:\n    parameter: n_cells\n    values: [16, 32, 64, 128]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": {
+      "operator_str": "Derivative(u(x, y), (x, 2)) + Derivative(u(x, y), (y, 2))",
+      "solution_str": "sin(pi*x)*sin(pi*y)",
+      "vanished_terms": [],
+      "is_positive": false
+    },
+    "conservation_results": []
   }
 }

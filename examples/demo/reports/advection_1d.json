@@ -7,33 +7,114 @@
         "norm_name": "L1",
         "observed_order": 2.0005606267519633,
         "expected_order": 2.0,
+        "std_err": 0.0002055094663431606,
+        "r_squared": 0.9999999788947639,
         "order_passed": true,
         "gci_fine": 0.0051099958276268325,
         "asymptotic_ratio": 0.4996223493581079,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          2.001338969536656,
+          2.0003346072084462,
+          2.0000836433586264
+        ],
+        "errors_per_grid": [
+          0.0013351543715603253,
+          0.0003334789464234045,
+          8.335040273466375e-05,
+          2.083639261381507e-05
+        ]
       },
       {
         "norm_name": "L2",
         "observed_order": 1.999832553505233,
         "expected_order": 2.0,
+        "std_err": 6.136943971052156e-05,
+        "r_squared": 0.9999999981165806,
         "order_passed": true,
         "gci_fine": 0.005113435255529835,
         "asymptotic_ratio": 0.4998745533648428,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.9996001327144068,
+          1.9999000289883277,
+          1.9999750069852646
+        ],
+        "errors_per_grid": [
+          0.0014806025554358843,
+          0.0003702532465763421,
+          9.256972600628126e-05,
+          2.314283242077029e-05
+        ]
       },
       {
         "norm_name": "Linf",
         "observed_order": 1.9976455933711488,
         "expected_order": 2.0,
+        "std_err": 0.0008634199006296131,
+        "r_squared": 0.9999996263740272,
         "order_passed": true,
         "gci_fine": 0.0051237839018279255,
         "asymptotic_ratio": 0.5006328804508162,
         "is_asymptotic": false,
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.9943752189166215,
+          1.9985957703859647,
+          1.9996490651392547
+        ],
+        "errors_per_grid": [
+          0.0020838055703116254,
+          0.0005229864430166264,
+          0.00013087393332622543,
+          3.272644305463146e-05
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\advection_1d_plot.png",
+    "grid_sizes": [
+      0.03125,
+      0.015625,
+      0.0078125,
+      0.00390625
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "128/64/32",
+        "gci_fine": 0.010216241710544253,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4990719034277968,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5007352005672098,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "256/128/64",
+        "gci_fine": 0.0051099958276268325,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4996223493581079,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5001835285820198,
         "convergence_state": "monotonic"
       }
     ],
-    "plot_image_path": "reports\\advection_1d_plot.png"
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T13:17:45.176455+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: advection_1d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x}\n    fields: {u: u}\nmms:\n  operator: \"Derivative(u(x, t), t) + c*Derivative(u(x, t), x)\"\n  solution: \"sin(2*pi*x)\"\n  symbols: {c: 1.0}\n  domain: {x: [0.0, 1.0], t: [0.0, 0.1]}\nstudy:\n  type: spatial\n  user_params:\n    equation: advection_1d\n  refinement:\n    parameter: n_cells\n    values: [32, 64, 128, 256]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": {
+      "operator_str": "Derivative(u(x, t), t) + c*Derivative(u(x, t), x)",
+      "solution_str": "sin(2*pi*x)",
+      "vanished_terms": [
+        "Derivative(u(x, t), t)"
+      ],
+      "is_positive": false
+    },
+    "conservation_results": []
   }
 }

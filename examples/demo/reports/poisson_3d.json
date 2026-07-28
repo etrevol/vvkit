@@ -7,33 +7,112 @@
         "norm_name": "L1",
         "observed_order": 2.010740012262146,
         "expected_order": 2.0,
+        "std_err": 0.002468188619799048,
+        "r_squared": 0.9999969864837498,
         "order_passed": true,
         "gci_fine": 0.002986271539005048,
         "asymptotic_ratio": 0.9944857979104957,
         "is_asymptotic": true,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          2.0168273008605784,
+          2.0053161824377135,
+          2.002621321664724
+        ],
+        "errors_per_grid": [
+          0.01119338558666046,
+          0.002765896666146135,
+          0.0012266404993747616,
+          0.0006894651541365555
+        ]
       },
       {
         "norm_name": "L2",
         "observed_order": 1.9974036072920718,
         "expected_order": 2.0,
+        "std_err": 0.0005951710673210881,
+        "r_squared": 0.9999998224249765,
         "order_passed": true,
         "gci_fine": 0.0030125351008012118,
         "asymptotic_ratio": 0.9992717311468704,
         "is_asymptotic": true,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.9959360490006488,
+          1.9987100780010254,
+          1.9993633338977959
+        ],
+        "errors_per_grid": [
+          0.015045049074585782,
+          0.0037718723660389916,
+          0.0016772647291257122,
+          0.0009436342279204404
+        ]
       },
       {
         "norm_name": "Linf",
         "observed_order": 1.9571737757091057,
         "expected_order": 2.0,
+        "std_err": 0.00985901639095347,
+        "r_squared": 0.9999492523008013,
         "order_passed": true,
         "gci_fine": 0.0030939883379806927,
         "asymptotic_ratio": 1.0138416038586555,
         "is_asymptotic": true,
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.932854997997167,
+          1.9788548654699147,
+          1.9895806356453938
+        ],
+        "errors_per_grid": [
+          0.04014767688392051,
+          0.0105150922837004,
+          0.004713614311727454,
+          0.0026593674744904705
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\poisson_3d_plot.png",
+    "grid_sizes": [
+      0.125,
+      0.0625,
+      0.041666666666666664,
+      0.03125
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "24/16/8",
+        "gci_fine": 0.005295990499991142,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.9854312289705451,
+        "is_asymptotic": true,
+        "convergence_condition_rc": 0.18671601135423285,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "32/24/16",
+        "gci_fine": 0.002986271539005048,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.9944857979104957,
+        "is_asymptotic": true,
+        "convergence_condition_rc": 0.35058257297894124,
         "convergence_state": "monotonic"
       }
     ],
-    "plot_image_path": "reports\\poisson_3d_plot.png"
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T13:18:46.683420+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: poisson_3d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x, y: y, z: z}\n    fields: {u: u}\nmms:\n  # Laplacian in 3D Cartesian\n  operator: \"Derivative(u(x, y, z), (x, 2)) + Derivative(u(x, y, z), (y, 2)) + Derivative(u(x, y, z), (z, 2))\"\n  solution: \"sin(pi*x)*sin(pi*y)*sin(pi*z)\"\n  symbols: {}\n  domain: {x: [0.0, 1.0], y: [0.0, 1.0], z: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: poisson_3d\n  refinement:\n    parameter: n_cells\n    values: [8, 16, 24, 32]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": {
+      "operator_str": "Derivative(u(x, y, z), (x, 2)) + Derivative(u(x, y, z), (y, 2)) + Derivative(u(x, y, z), (z, 2))",
+      "solution_str": "sin(pi*x)*sin(pi*y)*sin(pi*z)",
+      "vanished_terms": [],
+      "is_positive": false
+    },
+    "conservation_results": []
   }
 }

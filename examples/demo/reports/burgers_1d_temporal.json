@@ -7,33 +7,112 @@
         "norm_name": "L1",
         "observed_order": 0.9999999999998971,
         "expected_order": 1.0,
+        "std_err": 0.0,
+        "r_squared": 1.0,
         "order_passed": true,
         "gci_fine": 0.0015432630321801071,
         "asymptotic_ratio": 1.000000000000094,
         "is_asymptotic": true,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          0.9999999999999526,
+          0.9999999999999136,
+          0.9999999999998191
+        ],
+        "errors_per_grid": [
+          0.006392453221499872,
+          0.0031962266107500407,
+          0.001598113305375116,
+          0.0007990566526876582
+        ]
       },
       {
         "norm_name": "L2",
         "observed_order": 0.9999999999998983,
         "expected_order": 1.0,
+        "std_err": 0.0,
+        "r_squared": 1.0,
         "order_passed": true,
         "gci_fine": 0.0015432630321801043,
         "asymptotic_ratio": 1.000000000000093,
         "is_asymptotic": true,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          0.9999999999999537,
+          0.9999999999999145,
+          0.9999999999998198
+        ],
+        "errors_per_grid": [
+          0.007071067811865708,
+          0.0035355339059329675,
+          0.0017677669529665885,
+          0.0008838834764834046
+        ]
       },
       {
         "norm_name": "Linf",
         "observed_order": 0.999999999999895,
         "expected_order": 1.0,
+        "std_err": 0.0,
+        "r_squared": 1.0,
         "order_passed": true,
         "gci_fine": 0.0015432630321801117,
         "asymptotic_ratio": 1.0000000000000953,
         "is_asymptotic": true,
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          0.9999999999999513,
+          0.999999999999919,
+          0.9999999999998054
+        ],
+        "errors_per_grid": [
+          0.00987688340595172,
+          0.004938441702976026,
+          0.002469220851488152,
+          0.0012346104257442425
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\burgers_1d_temporal_plot.png",
+    "grid_sizes": [
+      0.1,
+      0.05,
+      0.025,
+      0.0125
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "40/20/10",
+        "gci_fine": 0.0030865260643602836,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 1.0000000000000602,
+        "is_asymptotic": true,
+        "convergence_condition_rc": 0.5000000000000057,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "80/40/20",
+        "gci_fine": 0.0015432630321801071,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 1.000000000000094,
+        "is_asymptotic": true,
+        "convergence_condition_rc": 0.4999999999999888,
         "convergence_state": "monotonic"
       }
     ],
-    "plot_image_path": "reports\\burgers_1d_temporal_plot.png"
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T13:18:59.800010+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: burgers_1d_temporal\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {x: x}\n    fields: {u: u}\nmms:\n  # Burgers' equation (viscous)\n  operator: \"Derivative(u(x, t), t) + u(x, t)*Derivative(u(x, t), x) - nu*Derivative(u(x, t), (x, 2))\"\n  solution: \"exp(-t)*sin(pi*x)\"\n  symbols: {nu: 0.1}\n  domain: {x: [0.0, 1.0], t: [0.0, 1.0]}\nstudy:\n  type: temporal\n  user_params:\n    equation: burgers_1d_temporal\n  refinement:\n    parameter: n_steps\n    values: [10, 20, 40, 80]\n  reference: point_value\n  expected_order: 1.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": {
+      "operator_str": "Derivative(u(x, t), t) + u(x, t)*Derivative(u(x, t), x) - nu*Derivative(u(x, t), (x, 2))",
+      "solution_str": "exp(-t)*sin(pi*x)",
+      "vanished_terms": [],
+      "is_positive": false
+    },
+    "conservation_results": []
   }
 }

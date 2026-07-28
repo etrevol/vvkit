@@ -7,33 +7,112 @@
         "norm_name": "L1",
         "observed_order": 2.00038859878156,
         "expected_order": 2.0,
+        "std_err": 0.00014859634996781278,
+        "r_squared": 0.9999999889638516,
         "order_passed": true,
         "gci_fine": 0.00040189990956683287,
         "asymptotic_ratio": 0.4935994586797349,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          2.0009452755517847,
+          2.00023804424335,
+          2.000032661395613
+        ],
+        "errors_per_grid": [
+          0.0006053817120698608,
+          0.00015124629668991554,
+          3.7805335788910215e-05,
+          9.451119979442183e-06
+        ]
       },
       {
         "norm_name": "L2",
         "observed_order": 2.000340165081032,
         "expected_order": 2.0,
+        "std_err": 0.00012457377754660878,
+        "r_squared": 0.9999999922433258,
         "order_passed": true,
         "gci_fine": 0.0004019178983969472,
         "asymptotic_ratio": 0.4936160299224342,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          2.000811882026683,
+          2.0002033547008455,
+          2.000050861975629
+        ],
+        "errors_per_grid": [
+          0.000626622063820445,
+          0.00015656738227907329,
+          3.91363287300205e-05,
+          9.78373725238237e-06
+        ]
       },
       {
         "norm_name": "Linf",
         "observed_order": 1.9995333422067887,
         "expected_order": 2.0,
+        "std_err": 0.0002906194269299735,
+        "r_squared": 0.9999999577504624,
         "order_passed": true,
         "gci_fine": 0.0004022177097176868,
         "asymptotic_ratio": 0.49389216041194073,
         "is_asymptotic": false,
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.9983039093501285,
+          2.0002831684971034,
+          1.9997630066763625
+        ],
+        "errors_per_grid": [
+          0.0007157127062480118,
+          0.00017913865546387298,
+          4.477587450915643e-05,
+          1.119580762559691e-05
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\spherical_1d_plot.png",
+    "grid_sizes": [
+      0.0625,
+      0.03125,
+      0.015625,
+      0.0078125
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "64/32/16",
+        "gci_fine": 0.0007937240768930123,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4864346624840323,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5138052225853255,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "128/64/32",
+        "gci_fine": 0.00040189990956683287,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4935994586797349,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5063471315372555,
         "convergence_state": "monotonic"
       }
     ],
-    "plot_image_path": "reports\\spherical_1d_plot.png"
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T13:18:20.984980+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: spherical_1d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {r: r}\n    fields: {u: u}\nmms:\n  # Laplacian in spherical coords: 1/r^2 * d/dr(r^2 * du/dr)\n  operator: \"(1/r**2)*Derivative(r**2 * Derivative(u(r), r), r)\"\n  solution: \"r**3 - r**2\"\n  symbols: {}\n  domain: {r: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: spherical_1d\n  refinement:\n    parameter: n_cells\n    values: [16, 32, 64, 128]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": {
+      "operator_str": "(1/r**2)*Derivative(r**2 * Derivative(u(r), r), r)",
+      "solution_str": "r**3 - r**2",
+      "vanished_terms": [],
+      "is_positive": false
+    },
+    "conservation_results": []
   }
 }

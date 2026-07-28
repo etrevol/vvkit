@@ -7,33 +7,112 @@
         "norm_name": "L1",
         "observed_order": 2.001193471068356,
         "expected_order": 2.0,
+        "std_err": 0.0004375003159261222,
+        "r_squared": 0.9999999044108628,
         "order_passed": true,
         "gci_fine": 0.005106225358034421,
         "asymptotic_ratio": 0.4991727343664472,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          2.002850458147607,
+          2.000712293961877,
+          2.000178053464411
+        ],
+        "errors_per_grid": [
+          0.0028928367257094307,
+          0.0007217816847869862,
+          0.00018035635285153684,
+          4.50835237846836e-05
+        ]
       },
       {
         "norm_name": "L2",
         "observed_order": 1.9997373245749026,
         "expected_order": 2.0,
+        "std_err": 9.62575211371534e-05,
+        "r_squared": 0.9999999953660277,
         "order_passed": true,
         "gci_fine": 0.005113101024412892,
         "asymptotic_ratio": 0.4996768156535695,
         "is_asymptotic": false,
-        "convergence_state": "monotonic"
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.9993727845030849,
+          1.9998431375217252,
+          1.9999607807176225
+        ],
+        "errors_per_grid": [
+          0.0035574429775195953,
+          0.0008897474803844107,
+          0.00022246105670149403,
+          5.5616776082142565e-05
+        ]
       },
       {
         "norm_name": "Linf",
         "observed_order": 1.995363404306677,
         "expected_order": 2.0,
+        "std_err": 0.0017003584232875262,
+        "r_squared": 0.9999985476666386,
         "order_passed": true,
         "gci_fine": 0.005133823621847296,
         "asymptotic_ratio": 0.5011940198290592,
         "is_asymptotic": false,
+        "convergence_state": "monotonic",
+        "pairwise_orders": [
+          1.988922956907611,
+          1.997234620317627,
+          1.9993088970244763
+        ],
+        "errors_per_grid": [
+          0.0070465306857446786,
+          0.0017752105834580867,
+          0.0004446541493174916,
+          0.00011121680143111323
+        ]
+      }
+    ],
+    "plot_image_path": "reports\\cylindrical_2d_plot.png",
+    "grid_sizes": [
+      0.0625,
+      0.03125,
+      0.015625,
+      0.0078125
+    ],
+    "gci_table": [
+      {
+        "grid_triplet": "64/32/16",
+        "gci_fine": 0.010203991669881337,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.49792130045703753,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5016721970191969,
+        "convergence_state": "monotonic"
+      },
+      {
+        "grid_triplet": "128/64/32",
+        "gci_fine": 0.005106225358034421,
+        "safety_factor": 1.25,
+        "asymptotic_ratio": 0.4991727343664472,
+        "is_asymptotic": false,
+        "convergence_condition_rc": 0.5004144969175385,
         "convergence_state": "monotonic"
       }
     ],
-    "plot_image_path": "reports\\cylindrical_2d_plot.png"
+    "environment": {
+      "vvkit_version": "0.1.0",
+      "platform": "Windows-11-10.0.22631-SP0",
+      "timestamp": "2026-07-28T13:18:34.172956+00:00",
+      "python_version": "3.12.1",
+      "config_echo": "version: 1\nname: cylindrical_2d\nsolver:\n  type: command\n  command: [\"python\", \"../../mock_solver.py\", \"{input_file}\"]\n  template: templates/solver.in.j2\n  reader:\n    type: npz\n    file: solution.npz\n    coords: {r: r, z: z}\n    fields: {u: u}\nmms:\n  # Laplacian in cylindrical coords (r, z): 1/r * d/dr(r * du/dr) + d^2u/dz^2\n  operator: \"(1/r)*Derivative(r * Derivative(u(r, z), r), r) + Derivative(u(r, z), (z, 2))\"\n  solution: \"sin(pi*r)*sin(pi*z)\"\n  symbols: {}\n  domain: {r: [0.0, 1.0], z: [0.0, 1.0]}\nstudy:\n  type: spatial\n  user_params:\n    equation: cylindrical_2d\n  refinement:\n    parameter: n_cells\n    values: [16, 32, 64, 128]\n  reference: cell_average\n  expected_order: 2.0\n  order_tolerance: 0.2\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+    },
+    "mms_diagnostics": {
+      "operator_str": "(1/r)*Derivative(r * Derivative(u(r, z), r), r) + Derivative(u(r, z), (z, 2))",
+      "solution_str": "sin(pi*r)*sin(pi*z)",
+      "vanished_terms": [],
+      "is_positive": false
+    },
+    "conservation_results": []
   }
 }
