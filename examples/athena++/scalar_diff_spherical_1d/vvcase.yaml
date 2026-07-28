@@ -1,0 +1,43 @@
+version: 1
+name: athena_scalar_diff_spherical_1d
+
+solver:
+  type: athena++
+  template: athinput.scalar_diff.template
+  plugin_args:
+    executable: "/home/etrevol/athena-collab/bin/athena_scalar_diff_spherical"
+    use_wsl: true
+    wsl_distro: Ubuntu
+    fields:
+      s0: u
+    coords:
+      x1v: x
+      x2v: y
+      x3v: z
+
+mms:
+  operator: "None"
+  solution: "1.0e-6 / (4.0*pi*0.001*(0.5 + 0.5))**1.5 * exp( -x**2 / (4.0*0.001*(0.5 + 0.5)) )"
+  symbols:
+    pi: 3.141592653589793
+  domain:
+    x: [0.0, 1.0]
+
+study:
+  type: spatial
+  expected_order: 1.0
+  order_tolerance: 0.2
+  reference: point_value
+  refinement:
+    parameter: nx
+    values: [8, 16, 32]
+  reference: cell_average
+  quadrature_order: 5
+  expected_order: 1.4
+  order_tolerance: 0.5
+  norms: [L1, L2]
+  exclude_boundary_cells: 0
+
+report:
+  formats: [html, json]
+  output_dir: reports/

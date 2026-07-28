@@ -1,0 +1,50 @@
+version: 1
+name: athena_linear_wave_3d
+
+solver:
+  type: athena++
+  template: athinput.linear_wave.template
+  plugin_args:
+    executable: "/home/etrevol/athena-collab/bin/athena_linear_wave"
+    use_wsl: true
+    fields:
+      rho: u
+    coords:
+      x1v: x
+      x2v: y
+      x3v: z
+
+mms:
+  operator: "None"
+  solution: "1.0 + 1.0e-6 * sin( k_par * (cos_a2*(x*cos_a3 + y*sin_a3) + z*sin_a2) )"
+  symbols:
+    pi: 3.141592653589793
+    cos_a3: 0.44721359549995804
+    sin_a3: 0.8944271909999159
+    cos_a2: 0.7453559924999299
+    sin_a2: 0.6666666666666667
+    k_par: 6.283185307179586
+  domain:
+    x: [0.0, 3.0]
+    y: [0.0, 1.5]
+    z: [0.0, 1.5]
+
+study:
+  type: spatial
+  refinement:
+    parameter: nx
+    values: [16, 32, 64]
+  user_params:
+    nx1: "2 * int(nx)"
+    nx2: "int(nx)"
+    nx3: "int(nx)"
+  reference: cell_average
+  quadrature_order: 5
+  expected_order: 2.0
+  order_tolerance: 0.5
+  norms: [L2]
+  exclude_boundary_cells: 0
+
+report:
+  formats: [html, json]
+  output_dir: reports/

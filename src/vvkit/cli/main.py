@@ -246,8 +246,8 @@ def run(
 
 
         except Exception as e:
-            console.print(f"[bold red]Failed during processing {case.case_id}: {e}[/]")
-            raise typer.Exit(code=1) from e
+            Console().print(Traceback())
+            raise e
 
     console.print("[cyan]Computing convergence metrics...[/cyan]")
 

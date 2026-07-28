@@ -127,12 +127,11 @@ class AthenaPlusPlusAdapter:
         # Standard variables
         field_names = [col for col in columns if col not in coord_names and col not in ["i", "j", "k"]]
         
-        # Read the numerical data
-        data = np.loadtxt(lines[data_start_idx:])
-        
-        # If the file had 1 row (very unlikely), reshape it
-        if data.ndim == 1:
-            data = data.reshape(1, -1)
+        # Read the numerical data by flattening and reshaping
+        all_floats = []
+        for line in lines[data_start_idx:]:
+            all_floats.extend([float(x) for x in line.split()])
+        data = np.array(all_floats).reshape(-1, len(columns))
             
         coords: dict[str, Any] = {}
         fields: dict[str, Any] = {}
@@ -145,7 +144,10 @@ class AthenaPlusPlusAdapter:
                 mapped_name = coord_map.get(col, col)
                 coords[mapped_name] = data[:, idx]
             elif col in field_names:
-                mapped_name = field_map.get(col, col) if field_map else col
-                fields[mapped_name] = data[:, idx]
+                if field_map is not None:
+                    if col in field_map:
+                        fields[field_map[col]] = data[:, idx]
+                else:
+                    fields[col] = data[:, idx]
                 
         return coords, fields
