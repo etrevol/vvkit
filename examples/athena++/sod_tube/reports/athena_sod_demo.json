@@ -5,25 +5,25 @@
     "norms": [
       {
         "norm_name": "L1",
-        "observed_order": 0.9226889239742837,
+        "observed_order": 0.9226889239742831,
         "expected_order": 1.0,
-        "std_err": 0.024964853900407938,
-        "r_squared": 0.9978086287833493,
+        "std_err": 0.024964853900410464,
+        "r_squared": 0.9978086287833489,
         "order_passed": true,
-        "gci_fine": 0.000326580233065088,
-        "asymptotic_ratio": 0.42382341747600744,
+        "gci_fine": 0.0003265802330650883,
+        "asymptotic_ratio": 0.42382341747600766,
         "is_asymptotic": false,
         "convergence_state": "divergent",
         "pairwise_orders": [
-          1.087535932253696,
-          0.887424670550814,
-          0.8945424965387463,
+          1.0875359322536957,
+          0.8874246705508138,
+          0.8945424965387464,
           0.8529579369833825
         ],
         "errors_per_grid": [
-          0.007374069448869059,
+          0.007374069448869056,
           0.003469974525721385,
-          0.001875792701645588,
+          0.0018757927016455882,
           0.001009022191737157,
           0.0005586435564312826
         ]
@@ -40,27 +40,27 @@
     "gci_table": [
       {
         "grid_triplet": "256/128/64",
-        "gci_fine": 1.814334628137656e-05,
+        "gci_fine": 1.8143346281376578e-05,
         "safety_factor": 1.25,
-        "asymptotic_ratio": 39.077420843272236,
+        "asymptotic_ratio": 39.07742084327226,
         "is_asymptotic": false,
         "convergence_condition_rc": 0.013499480789185211,
         "convergence_state": "monotonic"
       },
       {
         "grid_triplet": "512/256/128",
-        "gci_fine": 0.0002623807000694657,
+        "gci_fine": 0.000262380700069466,
         "safety_factor": 1.25,
-        "asymptotic_ratio": 0.03647778508261705,
+        "asymptotic_ratio": 0.03647778508261706,
         "is_asymptotic": false,
         "convergence_condition_rc": -14.461538461556527,
         "convergence_state": "divergent"
       },
       {
         "grid_triplet": "1024/512/256",
-        "gci_fine": 0.000326580233065088,
+        "gci_fine": 0.0003265802330650883,
         "safety_factor": 1.25,
-        "asymptotic_ratio": 0.42382341747600744,
+        "asymptotic_ratio": 0.42382341747600766,
         "is_asymptotic": false,
         "convergence_condition_rc": 1.244680851063456,
         "convergence_state": "divergent"
@@ -69,9 +69,9 @@
     "environment": {
       "vvkit_version": "0.1.0",
       "platform": "Windows-11-10.0.22631-SP0",
-      "timestamp": "2026-07-28T17:25:45.157240+00:00",
+      "timestamp": "2026-07-29T08:33:42.218754+00:00",
       "python_version": "3.12.1",
-      "config_echo": "version: 1\nname: athena_sod_demo\n\nsolver:\n  type: athena++\n  template: athinput.sod.template\n  plugin_args:\n    executable: \"/home/etrevol/athena-collab/bin/athena\"\n    use_wsl: true\n    wsl_distro: Ubuntu\n\nmms:\n  operator: \"None\"\n  solution: \"Piecewise((1.0, x <= -0.2958039891549808), ( (2/2.4 - 0.4/(2.4*1.1832159566199232) * (x/0.25))**(2/0.4), x <= -0.017568203140295863 ), (0.42631942817849516, x <= 0.23186315501223745), (0.265573711705307, x <= 0.4380389330075445), (0.125, True))\"\n  symbols: {}\n  domain: {x: [-0.5, 0.5]}\n\nstudy:\n  type: spatial\n  refinement:\n    parameter: nx1\n    values: [64, 128, 256, 512, 1024]\n  reference: cell_average\n  expected_order: 1.0\n  order_tolerance: 0.3\n  norms: [L1]\n  exclude_boundary_cells: 2\n  user_params: {}\n\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
+      "config_echo": "version: 1\nname: athena_sod_demo\n\nsolver:\n  type: athena++\n  template: athinput.sod.template\n  plugin_args:\n    athena_source: \"/home/etrevol/athena-collab\"\n    configure_args: [\"--prob=shock_tube\"]\n    use_wsl: true\n    wsl_distro: Ubuntu\n\nmms:\n  operator: \"None\"\n  solution: \"Piecewise((1.0, x <= -0.2958039891549808), ( (2/2.4 - 0.4/(2.4*1.1832159566199232) * (x/0.25))**(2/0.4), x <= -0.017568203140295863 ), (0.42631942817849516, x <= 0.23186315501223745), (0.265573711705307, x <= 0.4380389330075445), (0.125, True))\"\n  symbols: {}\n  domain: {x: [-0.5, 0.5]}\n\nstudy:\n  type: spatial\n  refinement:\n    parameter: nx1\n    values: [64, 128, 256, 512, 1024]\n  reference: cell_average\n  expected_order: 1.0\n  order_tolerance: 0.3\n  norms: [L1]\n  exclude_boundary_cells: 2\n  user_params: {}\n\nreport:\n  formats: [html, json]\n  output_dir: reports/\n"
     },
     "mms_diagnostics": null,
     "conservation_results": []
