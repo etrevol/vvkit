@@ -1,0 +1,38 @@
+version: 1
+name: athena_acc_disk_visc
+
+solver:
+  type: athena++
+  template: athinput.acc_disk_visc.template
+  plugin_args:
+    athena_source: "/home/etrevol/athena-collab"
+    configure_args: ["--prob=acc_disk_visc", "--coord=cylindrical"]
+    use_wsl: true
+    wsl_distro: Ubuntu
+    fields:
+      rho: rho
+
+mms:
+  operator: "None"
+  solution: "Piecewise((((1.0/x - 0.5/(x**2) - 0.2)/0.3)**3.3333333333333335 + 0.0001, 1.0/x - 0.5/(x**2) - 0.2 > 0.0), (0.0001, True))"
+  symbols: {}
+  domain:
+    x: [0.35, 5.55]
+    y: [0.0, 6.28318530718]
+
+study:
+  type: spatial
+  coordinate_system: cylindrical
+  refinement:
+    parameter: nx1
+    values: [88, 176, 352]
+  reference: cell_average
+  quadrature_order: 5
+  expected_order: 2.0
+  order_tolerance: 0.3
+  norms: [L1, L2]
+  exclude_boundary_cells: 0
+
+report:
+  formats: [html, json]
+  output_dir: reports/
