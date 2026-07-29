@@ -32,11 +32,55 @@ class AthenaPlusPlusAdapter:
 
     def __init__(self, config: SolverConfig) -> None:
         self.config = config
-        self.executable = config.plugin_args.get("executable", "athena")
         self.use_wsl = config.plugin_args.get("use_wsl", False)
         self.wsl_distro = config.plugin_args.get("wsl_distro", "Ubuntu")
         self.timeout_s = config.timeout_s
         self.template_path = Path(config.template) if config.template else None
+
+        self.athena_source = config.plugin_args.get("athena_source")
+        self.configure_args = config.plugin_args.get("configure_args", [])
+        
+        if self.athena_source:
+            self.executable = self._build_athena()
+        else:
+            self.executable = config.plugin_args.get("executable", "athena")
+
+    def _build_athena(self) -> str:
+        """Build Athena++ if source is provided and return the path to the executable."""
+        import hashlib
+        
+        src_path = self.athena_source
+        
+        # Create a unique binary name based on the configure args
+        args_str = " ".join(self.configure_args)
+        args_hash = hashlib.md5(args_str.encode()).hexdigest()[:8]
+        binary_name = f"athena_{args_hash}"
+        
+        # If binary already exists in the source bin/, use it
+        if self.use_wsl:
+            check_cmd = ["wsl", "-d", self.wsl_distro, "--", "bash", "-c", f"test -f {src_path}/bin/{binary_name}"]
+            exists = subprocess.run(check_cmd, check=False).returncode == 0
+        else:
+            bin_path = Path(src_path).expanduser() / "bin" / binary_name
+            exists = bin_path.exists()
+            
+        if not exists:
+            print(f"[vvkit] Compiling Athena++ from {src_path} with args: {args_str}")
+            config_cmd = f"python3 configure.py {args_str}"
+            make_cmd = f"make clean && make -j4 && cp bin/athena bin/{binary_name}"
+            full_cmd = f"cd {src_path} && {config_cmd} && {make_cmd}"
+            
+            if self.use_wsl:
+                build_cmd = ["wsl", "-d", self.wsl_distro, "--", "bash", "-c", full_cmd]
+            else:
+                build_cmd = ["bash", "-c", full_cmd]
+                
+            res = subprocess.run(build_cmd, check=False, capture_output=True, text=True)
+            if res.returncode != 0:
+                print(res.stderr)
+                raise RuntimeError(f"Failed to compile Athena++.\n{res.stderr}")
+                
+        return f"{src_path}/bin/{binary_name}"
 
     def run(self, case: CaseSpec, workdir: Path) -> SolverResult:
         workdir = workdir.resolve()

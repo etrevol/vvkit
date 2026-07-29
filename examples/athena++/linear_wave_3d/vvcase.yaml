@@ -5,7 +5,8 @@ solver:
   type: athena++
   template: athinput.linear_wave.template
   plugin_args:
-    executable: "/home/etrevol/athena-collab/bin/athena_linear_wave"
+    athena_source: "/home/etrevol/athena-collab"
+    configure_args: ["--prob=linear_wave"]
     use_wsl: true
     fields:
       rho: u
