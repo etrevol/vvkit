@@ -205,18 +205,20 @@ def run(
 
             if config.study.reference == "cell_average":
                 from vvkit.norms.quadrature import cell_average_nd
-                u_exact = cell_average_nd(
-                    u_exact_func, 
-                    bounds_list, 
-                    order=config.study.quadrature_order,
-                    coordinate_system=config.study.coordinate_system
-                )
+                with np.errstate(invalid='ignore', divide='ignore'):
+                    u_exact = cell_average_nd(
+                        u_exact_func, 
+                        bounds_list, 
+                        order=config.study.quadrature_order,
+                        coordinate_system=config.study.coordinate_system
+                    )
                 u_exact = u_exact.reshape(u_num.shape)
                 if np.isscalar(u_exact):
                     u_exact = np.full_like(u_num, u_exact)
             else:
                 kwargs = {c: res.coordinates[c] for c in coord_names}
-                u_exact = u_exact_func(**kwargs)
+                with np.errstate(invalid='ignore', divide='ignore'):
+                    u_exact = u_exact_func(**kwargs)
                 if np.isscalar(u_exact):
                     u_exact = np.full_like(u_num, u_exact)
 
@@ -241,10 +243,23 @@ def run(
                     u_exact = u_exact[n_ex:-n_ex]
                     measures = measures[n_ex:-n_ex]
                 else:
-                    slices = tuple(slice(n_ex, -n_ex) for _ in range(len(coord_names)))
-                    u_num = u_num[slices]
-                    u_exact = u_exact[slices]
-                    measures = measures[slices]
+                    # Construct a boolean mask based on unique coordinate values
+                    # This gracefully handles flat 1D representations of multi-dimensional arrays
+                    mask = np.ones_like(u_num, dtype=bool)
+                    for c in coord_names:
+                        c_vals = res.coordinates[c].ravel()
+                        u_vals = np.unique(c_vals)
+                        if len(u_vals) > 2 * n_ex:
+                            min_cutoff = u_vals[n_ex]
+                            max_cutoff = u_vals[-1 - n_ex]
+                            mask &= (c_vals >= min_cutoff) & (c_vals <= max_cutoff)
+                        else:
+                            mask[:] = False
+                            
+                    # For a multi-dimensional array, flattening first ensures boolean masking works seamlessly
+                    u_num = u_num.ravel()[mask].reshape(-1)
+                    u_exact = u_exact.ravel()[mask].reshape(-1)
+                    measures = measures.ravel()[mask].reshape(-1)
 
             err_diff = u_num - u_exact
             for norm_name in config.study.norms:

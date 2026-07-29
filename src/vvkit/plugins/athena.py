@@ -44,6 +44,7 @@ When configuring your `vvcase.yaml`, you can pass the following arguments under 
 - `athena_source` *(string, optional)*: Path to the Athena++ source code. If provided, the plugin will compile Athena++ on-the-fly and cache the binary.
 - `configure_args` *(list of strings, optional)*: List of arguments to pass to `configure.py` when compiling (e.g., `["--prob=shock_tube", "--coord=cylindrical", "--nscalars=1"]`).
 - `executable` *(string, optional)*: Path to a pre-compiled Athena++ executable. Ignored if `athena_source` is provided. Default is `"athena"`.
+- `output_stream` *(string, optional)*: The output stream block identifier to parse for fields (e.g., `"out1"`, `"out2"`). Default is `"out1"`.
 - `use_wsl` *(boolean, optional)*: If `true`, compilation and execution are routed through Windows Subsystem for Linux natively.
 - `wsl_distro` *(string, optional)*: The WSL distribution to use. Default is `"Ubuntu"`.
 
@@ -183,7 +184,12 @@ report:
 
         if proc.returncode == 0:
             # Find the latest generated .tab file
-            tab_files = list(workdir.glob("*.tab"))
+            stream_pattern = self.config.plugin_args.get("output_stream", "out1")
+            tab_files = list(workdir.glob(f"*.{stream_pattern}.*.tab"))
+            if not tab_files:
+                # Fallback to general search if the output_stream pattern doesn't match
+                tab_files = list(workdir.glob("*.tab"))
+                
             if not tab_files:
                 raise FileNotFoundError(f"No .tab files found in {workdir} after Athena++ execution.")
             
