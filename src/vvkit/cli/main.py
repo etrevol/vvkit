@@ -633,6 +633,29 @@ def plugin_list() -> None:
     console.print(table)
 
 
+@plugin_app.command("info")
+def plugin_info(
+    plugin_name: Annotated[str, typer.Argument(help="Name of the plugin to inspect")]
+) -> None:
+    """Show detailed help and documentation for a specific plugin."""
+    import importlib.metadata
+    from rich.markdown import Markdown
+
+    eps = list(importlib.metadata.entry_points(group="vvkit.adapters"))
+    for ep in eps:
+        if ep.name == plugin_name:
+            try:
+                adapter_cls = ep.load()
+                help_text = getattr(adapter_cls, "adapter_help", f"No detailed help provided by plugin '{plugin_name}'.")
+                console.print(Markdown(help_text))
+            except Exception as e:
+                console.print(f"[bold red]Error loading plugin '{plugin_name}':[/] {e}")
+            return
+            
+    console.print(f"[bold red]Error:[/] Plugin '{plugin_name}' not found.")
+    raise typer.Exit(code=1)
+
+
 def main() -> None:
     app()
 

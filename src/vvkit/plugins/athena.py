@@ -31,7 +31,26 @@ class AthenaPlusPlusAdapter:
     """Specialized adapter for Athena++."""
     
     adapter_name = "Athena++"
-    adapter_description = "Fully automated adapter for the Athena++ astrophysical MHD code."
+    adapter_description = "Fully automated adapter for the Athena++ GRMHD AMR code (https://www.athena-astro.app/index.html)."
+    
+    adapter_help = """\
+# Athena++ Plugin
+
+This plugin provides a fully automated compilation and execution environment for the Athena++ astrophysical GRMHD AMR code.
+
+## Plugin Arguments (`plugin_args`)
+When configuring your `vvcase.yaml`, you can pass the following arguments under `solver.plugin_args`:
+
+- `athena_source` *(string, optional)*: Path to the Athena++ source code. If provided, the plugin will compile Athena++ on-the-fly and cache the binary.
+- `configure_args` *(list of strings, optional)*: List of arguments to pass to `configure.py` when compiling (e.g., `["--prob=shock_tube", "--coord=cylindrical", "--nscalars=1"]`).
+- `executable` *(string, optional)*: Path to a pre-compiled Athena++ executable. Ignored if `athena_source` is provided. Default is `"athena"`.
+- `use_wsl` *(boolean, optional)*: If `true`, compilation and execution are routed through Windows Subsystem for Linux natively.
+- `wsl_distro` *(string, optional)*: The WSL distribution to use. Default is `"Ubuntu"`.
+
+## Features
+- Intelligently parses the output `.tab` files directly, automatically extracting coordinate bounds and field names. No need for a `reader` block in your `vvcase.yaml`!
+- Caches compiled binaries using an MD5 hash of `configure_args` to avoid unnecessary rebuilds across multiple studies.
+"""
     
     @classmethod
     def get_init_template(cls) -> str:
