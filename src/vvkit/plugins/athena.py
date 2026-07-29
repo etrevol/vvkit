@@ -29,6 +29,43 @@ from vvkit.runner.adapters import CaseSpec, SolverResult
 
 class AthenaPlusPlusAdapter:
     """Specialized adapter for Athena++."""
+    
+    adapter_name = "Athena++"
+    adapter_description = "Fully automated adapter for the Athena++ astrophysical MHD code."
+    
+    @classmethod
+    def get_init_template(cls) -> str:
+        return """version: 1
+name: athena_shock_tube_example
+
+solver:
+  type: athena++
+  template: athinput.sod.template
+  plugin_args:
+    athena_source: "/home/user/athena-collab"
+    configure_args: ["--prob=shock_tube"]
+    use_wsl: true
+    wsl_distro: Ubuntu
+
+mms:
+  operator: "0"  # Shock tube doesn't strictly use MMS source terms
+  solution: "0"
+  symbols: {}
+  domain: {x1: [-0.5, 0.5]}
+
+study:
+  type: spatial
+  refinement:
+    parameter: nx1
+    values: [32, 64, 128, 256]
+  reference: cell_average
+  expected_order: 1.0
+  order_tolerance: 0.2
+
+report:
+  formats: [html, json, junit]
+  output_dir: reports/
+"""
 
     def __init__(self, config: SolverConfig) -> None:
         self.config = config

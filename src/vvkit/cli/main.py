@@ -58,9 +58,29 @@ console = Console()
 @app.command()
 def init(
     path: Annotated[Path, typer.Option(help="Path to output yaml")] = Path("vvcase.yaml"),
+    plugin: Annotated[str | None, typer.Option("--plugin", "-p", help="Scaffold a plugin-specific configuration")] = None,
 ) -> None:
     """Scaffold an initial vvcase.yaml configuration file."""
-    template = """version: 1
+    import importlib.metadata
+    
+    template = None
+    
+    if plugin:
+        eps = importlib.metadata.entry_points(group="vvkit.adapters")
+        for ep in eps:
+            if ep.name == plugin:
+                adapter_cls = ep.load()
+                if hasattr(adapter_cls, "get_init_template"):
+                    template = adapter_cls.get_init_template()
+                else:
+                    console.print(f"[yellow]Warning: Plugin '{plugin}' does not provide a custom template. Falling back to generic.[/yellow]")
+                break
+        else:
+            console.print(f"[bold red]Error:[/] Plugin '{plugin}' not found.")
+            raise typer.Exit(code=1)
+            
+    if not template:
+        template = """version: 1
 name: burgers_1d_example
 
 solver:
@@ -576,6 +596,41 @@ def baseline_update(
 
     shutil.copy(json_path, baseline_path)
     console.print(f"[green]Baseline updated at {baseline_path}[/green]")
+
+
+plugin_app = typer.Typer(name="plugin", help="Manage and inspect solver plugins")
+app.add_typer(plugin_app)
+
+@plugin_app.command("list")
+def plugin_list() -> None:
+    """List all installed solver plugins."""
+    import importlib.metadata
+    from rich.table import Table
+
+    eps = list(importlib.metadata.entry_points(group="vvkit.adapters"))
+    
+    if not eps:
+        console.print("[yellow]No plugins found. Install plugins to extend vvkit capabilities.[/yellow]")
+        return
+        
+    table = Table(title="Installed vvkit Plugins", show_lines=True)
+    table.add_column("Key", style="cyan", no_wrap=True)
+    table.add_column("Name", style="magenta")
+    table.add_column("Description", style="white")
+    
+    for ep in eps:
+        key = ep.name
+        try:
+            adapter_cls = ep.load()
+            name = getattr(adapter_cls, "adapter_name", "Unknown")
+            desc = getattr(adapter_cls, "adapter_description", "No description provided.")
+        except Exception as e:
+            name = "[red]Error loading[/red]"
+            desc = f"[red]{str(e)}[/red]"
+            
+        table.add_row(key, name, desc)
+        
+    console.print(table)
 
 
 def main() -> None:
