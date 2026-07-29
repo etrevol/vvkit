@@ -24,6 +24,7 @@ import numpy as np
 import sympy as sp
 import typer
 from rich.console import Console
+from rich.traceback import Traceback
 
 import vvkit
 from vvkit.config import load_config

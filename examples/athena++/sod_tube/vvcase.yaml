@@ -5,7 +5,7 @@ solver:
   type: athena++
   template: athinput.sod.template
   plugin_args:
-    executable: "/home/etrevol/athena-collab/bin/athena"
+    executable: "/home/etrevol/athena-collab/bin/athena_sod"
     use_wsl: true
     wsl_distro: Ubuntu
 
