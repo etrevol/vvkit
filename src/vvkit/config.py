@@ -55,6 +55,7 @@ class StudyConfig(BaseModel):
     user_params: dict[str, Any] = Field(default_factory=dict)
     reference: Literal["cell_average", "point_value"] = "cell_average"
     quadrature_order: int = 5
+    coordinate_system: Literal["cartesian", "cylindrical", "spherical_polar"] = "cartesian"
     norms: list[str] = Field(default_factory=lambda: ["L1", "L2", "Linf"])
     exclude_boundary_cells: int = 0
     expected_order: float = 2.0

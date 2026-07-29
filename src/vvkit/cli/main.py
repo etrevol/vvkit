@@ -170,21 +170,26 @@ def run(
             
             eval_symbols = [sp.Symbol(c) for c in coord_names]
             u_exact_func = sp.lambdify(eval_symbols, u_sym_eval, modules="numpy")
-            
+
+            bounds_list = []
+            for c in coord_names:
+                c_vals = res.coordinates[c]
+                c_vals_flat = c_vals.ravel()
+                domain_val = config.mms.domain.get(c, [0.0, 1.0])
+                h_c = (domain_val[1] - domain_val[0]) / n
+                c_bounds = np.zeros((len(c_vals_flat), 2), dtype=np.float64)
+                c_bounds[:, 0] = c_vals_flat - h_c / 2.0
+                c_bounds[:, 1] = c_vals_flat + h_c / 2.0
+                bounds_list.append(c_bounds)
+
             if config.study.reference == "cell_average":
                 from vvkit.norms.quadrature import cell_average_nd
-                bounds_list = []
-                for c in coord_names:
-                    c_vals = res.coordinates[c]
-                    c_vals_flat = c_vals.ravel()
-                    domain_val = config.mms.domain.get(c, [0.0, 1.0])
-                    h_c = (domain_val[1] - domain_val[0]) / n
-                    c_bounds = np.zeros((len(c_vals_flat), 2), dtype=np.float64)
-                    c_bounds[:, 0] = c_vals_flat - h_c / 2.0
-                    c_bounds[:, 1] = c_vals_flat + h_c / 2.0
-                    bounds_list.append(c_bounds)
-                
-                u_exact = cell_average_nd(u_exact_func, bounds_list, order=config.study.quadrature_order)
+                u_exact = cell_average_nd(
+                    u_exact_func, 
+                    bounds_list, 
+                    order=config.study.quadrature_order,
+                    coordinate_system=config.study.coordinate_system
+                )
                 u_exact = u_exact.reshape(u_num.shape)
                 if np.isscalar(u_exact):
                     u_exact = np.full_like(u_num, u_exact)
@@ -197,11 +202,17 @@ def run(
             if res.cell_measures is not None:
                 measures = res.cell_measures
             else:
-                # If spatial 2D, dx*dy, if 1D, dx
-                if config.study.type == "spatial" and len(coord_names) > 1:
-                    measures = np.full_like(u_num, h_val**len(coord_names))
+                if config.study.type == "spatial":
+                    from vvkit.norms.quadrature import compute_cell_volumes
+                    measures = compute_cell_volumes(
+                        bounds_list,
+                        order=config.study.quadrature_order,
+                        coordinate_system=config.study.coordinate_system
+                    )
+                    measures = measures.reshape(u_num.shape)
                 else:
                     measures = np.full_like(u_num, h_val)
+
             if config.study.exclude_boundary_cells > 0:
                 n_ex = config.study.exclude_boundary_cells
                 if len(coord_names) == 1:

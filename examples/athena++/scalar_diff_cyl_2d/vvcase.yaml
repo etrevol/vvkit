@@ -22,13 +22,14 @@ mms:
 
 study:
   type: spatial
+  coordinate_system: cylindrical
   refinement:
     parameter: nx
-    values: [8, 16, 32]
+    values: [64, 128, 256]
   reference: cell_average
   quadrature_order: 5
-  expected_order: 1.5
-  order_tolerance: 0.5
+  expected_order: 2.0
+  order_tolerance: 0.3
   norms: [L1, L2]
   exclude_boundary_cells: 0
 
