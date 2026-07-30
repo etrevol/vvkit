@@ -130,7 +130,10 @@ def run(
     config = load_config(config_path)
 
     # 1. Parse MMS exact solution for error computation
-    u_sym = sp.sympify(config.mms.solution)
+    sol_str = config.mms.solution
+    if isinstance(sol_str, dict):
+        sol_str = list(sol_str.values())[0]  # Use the first variable for error computation by default
+    u_sym = sp.sympify(sol_str)
     u_sym = u_sym.subs(config.mms.symbols)
 
     # 2. Setup adapter
@@ -411,19 +414,33 @@ def run(
     try:
         from vvkit.mms.dsl import parse_mms_problem
         from vvkit.mms.preset import check_domain_positivity
-        prob = parse_mms_problem(
+        prob_or_dict = parse_mms_problem(
             config.mms.operator, config.mms.solution,
             symbols_dict=config.mms.symbols, domain_dict=config.mms.domain,
         )
+        if isinstance(prob_or_dict, dict):
+            prob = list(prob_or_dict.values())[0]
+            vanished_terms = []
+            for p in prob_or_dict.values():
+                vanished_terms.extend(p.vanished_terms)
+        else:
+            prob = prob_or_dict
+            vanished_terms = prob.vanished_terms
+
         all_syms = prob.variables.copy()
         if prob.time_var and prob.time_var not in all_syms:
             all_syms.append(prob.time_var)
         domain_bounds = {str(s): tuple(config.mms.domain[str(s)]) for s in all_syms if str(s) in config.mms.domain}
-        is_pos = check_domain_positivity(prob.manufactured_sol, symbols=all_syms, domain=domain_bounds)
+
+        if isinstance(prob_or_dict, dict):
+            is_pos = all(check_domain_positivity(p.manufactured_sol, symbols=all_syms, domain=domain_bounds) for p in prob_or_dict.values())
+        else:
+            is_pos = check_domain_positivity(prob.manufactured_sol, symbols=all_syms, domain=domain_bounds)
+
         mms_diag = MMSDiagnostics(
-            operator_str=config.mms.operator,
-            solution_str=config.mms.solution,
-            vanished_terms=prob.vanished_terms,
+            operator_str=str(config.mms.operator),
+            solution_str=str(config.mms.solution),
+            vanished_terms=vanished_terms,
             is_positive=is_pos,
         )
     except Exception:
@@ -489,7 +506,10 @@ def generate_mms(
     # Simple derivation of source term S = L(u_m) using sympy
     # For full MMS, substitute u(x,t) with solution.
     # In vvkit mms, we sympify operator with u substituted.
-    u_sym = sp.sympify(config.mms.solution)
+    sol_str = config.mms.solution
+    if isinstance(sol_str, dict):
+        sol_str = list(sol_str.values())[0]
+    u_sym = sp.sympify(sol_str)
     u_sym = u_sym.subs(config.mms.symbols)
 
     # Convert 'Derivative(u(x, t), t)' -> differentiate u_sym
@@ -500,15 +520,24 @@ def generate_mms(
     # A complete MMS engine would parse the DSL.
     try:
         from vvkit.mms.dsl import parse_mms_problem
-        prob = parse_mms_problem(
+        prob_or_dict = parse_mms_problem(
             config.mms.operator,
             config.mms.solution,
             symbols_dict=config.mms.symbols,
             domain_dict=config.mms.domain,
         )
 
-        if prob.vanished_terms:
-            console.print(f"[bold yellow]Warning: The following operator terms vanish with the chosen manufactured solution: {prob.vanished_terms}[/bold yellow]")
+        if isinstance(prob_or_dict, dict):
+            prob = list(prob_or_dict.values())[0]
+            vanished_terms = []
+            for p in prob_or_dict.values():
+                vanished_terms.extend(p.vanished_terms)
+        else:
+            prob = prob_or_dict
+            vanished_terms = prob.vanished_terms
+
+        if vanished_terms:
+            console.print(f"[bold yellow]Warning: The following operator terms vanish with the chosen manufactured solution: {vanished_terms}[/bold yellow]")
 
         from vvkit.mms.preset import check_domain_positivity
         
@@ -521,15 +550,19 @@ def generate_mms(
             if str(s) in config.mms.domain:
                 domain_bounds[str(s)] = tuple(config.mms.domain[str(s)])
                 
-        is_positive = check_domain_positivity(
-            prob.manufactured_sol,
-            symbols=all_syms,
-            domain=domain_bounds,
-        )
+        if isinstance(prob_or_dict, dict):
+            is_positive = all(check_domain_positivity(p.manufactured_sol, symbols=all_syms, domain=domain_bounds) for p in prob_or_dict.values())
+            op_expr = {k: p.source_term for k, p in prob_or_dict.items()}
+        else:
+            is_positive = check_domain_positivity(
+                prob.manufactured_sol,
+                symbols=all_syms,
+                domain=domain_bounds,
+            )
+            op_expr = prob.source_term
+
         if not is_positive:
             console.print("[bold yellow]Warning: The manufactured solution is not strictly positive over the domain. Physical solvers may crash![/bold yellow]")
-
-        op_expr = prob.source_term
 
         if language == "c":
             code = emit_c_source(op_expr)

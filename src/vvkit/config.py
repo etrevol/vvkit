@@ -38,8 +38,8 @@ class SolverConfig(BaseModel):
 
 
 class MMSConfig(BaseModel):
-    operator: str
-    solution: str
+    operator: str | dict[str, str]
+    solution: str | dict[str, str]
     symbols: dict[str, float] = Field(default_factory=dict)
     domain: dict[str, list[float]] = Field(default_factory=dict)
 

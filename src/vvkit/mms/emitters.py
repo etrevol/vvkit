@@ -19,46 +19,59 @@ from sympy.printing.c import ccode
 
 
 def emit_c_source(
-    expr: sp.Expr,
+    expr: sp.Expr | dict[str, sp.Expr],
     func_name: str = "mms_source",
     arg_names: list[str] | None = None,
 ) -> str:
-    """Emit C code for a symbolic SymPy expression.
-
-    Cites: PROJECT_SPEC.md Section 3.1 & Milestone M2.
-    """
+    """Emit C code for a symbolic SymPy expression or multiple expressions."""
     if arg_names is None:
         arg_names = ["x", "t"]
     args_str = ", ".join([f"double {arg}" for arg in arg_names])
-    c_body = ccode(expr)
+
+    if isinstance(expr, dict):
+        funcs = []
+        for k, v in expr.items():
+            c_body = ccode(v)
+            funcs.append(f"double {func_name}_{k}({args_str}) {{\n    return {c_body};\n}}")
+        body = "\n\n".join(funcs)
+    else:
+        c_body = ccode(expr)
+        body = f"double {func_name}({args_str}) {{\n    return {c_body};\n}}"
+
     return f"""#include <math.h>
 
-double {func_name}({args_str}) {{
-    return {c_body};
-}}
+{body}
 """
 
 
 def emit_cpp_source(
-    expr: sp.Expr,
+    expr: sp.Expr | dict[str, sp.Expr],
     func_name: str = "mms_source",
     arg_names: list[str] | None = None,
 ) -> str:
-    """Emit C++ code for a symbolic SymPy expression."""
+    """Emit C++ code for a symbolic SymPy expression or multiple expressions."""
     if arg_names is None:
         arg_names = ["x", "t"]
     args_str = ", ".join([f"double {arg}" for arg in arg_names])
-    c_body = ccode(expr)
+
+    if isinstance(expr, dict):
+        funcs = []
+        for k, v in expr.items():
+            c_body = ccode(v)
+            funcs.append(f"extern \"C\" double {func_name}_{k}({args_str}) {{\n    return {c_body};\n}}")
+        body = "\n\n".join(funcs)
+    else:
+        c_body = ccode(expr)
+        body = f"extern \"C\" double {func_name}({args_str}) {{\n    return {c_body};\n}}"
+
     return f"""#include <cmath>
 
-extern "C" double {func_name}({args_str}) {{
-    return {c_body};
-}}
+{body}
 """
 
 
 def emit_python_source(
-    expr: sp.Expr,
+    expr: sp.Expr | dict[str, sp.Expr],
     func_name: str = "mms_source",
     arg_names: list[str] | None = None,
 ) -> str:
@@ -66,9 +79,19 @@ def emit_python_source(
     if arg_names is None:
         arg_names = ["x", "t"]
     args_str = ", ".join(arg_names)
-    py_body = sp.pycode(expr)
+
+    if isinstance(expr, dict):
+        funcs = []
+        for k, v in expr.items():
+            py_body = sp.pycode(v)
+            funcs.append(f"def {func_name}_{k}({args_str}):\n    return {py_body}")
+        body = "\n\n".join(funcs)
+    else:
+        py_body = sp.pycode(expr)
+        body = f"def {func_name}({args_str}):\n    return {py_body}"
+
     return f"""import numpy as np
 
-def {func_name}({args_str}):
-    return {py_body}
+{body}
 """
+

@@ -43,11 +43,11 @@ class MMSProblem:
 
 
 def parse_mms_problem(
-    operator_str: str,
-    solution_str: str,
+    operator_str: str | dict[str, str],
+    solution_str: str | dict[str, str],
     symbols_dict: dict[str, float] | None = None,
     domain_dict: dict[str, list[float]] | None = None,
-) -> MMSProblem:
+) -> MMSProblem | dict[str, MMSProblem]:
     """Parse SymPy expression strings into symbolic objects and compute source S = L(u_m).
 
     Cites: Roache (2002), PROJECT_SPEC.md Section 3.1.
@@ -57,61 +57,61 @@ def parse_mms_problem(
     if domain_dict is None:
         domain_dict = {}
 
+    is_scalar = isinstance(operator_str, str)
+    operators = {"u": operator_str} if is_scalar else operator_str
+    solutions = {"u": solution_str} if isinstance(solution_str, str) else solution_str
+
     sym_objs = {name: sp.Symbol(name) for name in symbols_dict}
     for var in domain_dict:
         if var not in sym_objs:
             sym_objs[var] = sp.Symbol(var)
             
     # Fallback if domain_dict was empty
-    for var in ["x", "y", "z", "t", "u"]:
+    for var in ["x", "y", "z", "t"]:
         if var not in sym_objs:
             sym_objs[var] = sp.Symbol(var)
 
-    u_func = sp.Function("u")
-    u_sym = sym_objs["u"]
+    funcs = {}
+    for k in solutions:
+        funcs[k] = sp.Function(k)
+        if k not in sym_objs:
+            sym_objs[k] = sp.Symbol(k)
 
-    local_dict: dict[str, Any] = {**sym_objs, "u": u_func, "Eq": sp.Eq, "Derivative": sp.Derivative}
+    local_dict: dict[str, Any] = {**sym_objs, **funcs, "Eq": sp.Eq, "Derivative": sp.Derivative}
 
-    u_m = sp.sympify(solution_str, locals=local_dict)
+    u_m = {}
+    for k, sol_str in solutions.items():
+        u_m[k] = sp.sympify(sol_str, locals=local_dict)
 
-    op_parsed = sp.sympify(operator_str, locals=local_dict)
-    if isinstance(op_parsed, sp.Eq):
-        op_expr = op_parsed.lhs - op_parsed.rhs
-    else:
-        op_expr = op_parsed
+    op_parsed = {}
+    for k, op_str in operators.items():
+        op_str_parsed = sp.sympify(op_str, locals=local_dict)
+        if isinstance(op_str_parsed, sp.Eq):
+            op_parsed[k] = op_str_parsed.lhs - op_str_parsed.rhs
+        else:
+            op_parsed[k] = op_str_parsed
 
-    def is_u_call(e: sp.Basic) -> bool:
-        return isinstance(e, AppliedUndef) and e.func == u_func
-
-    # Infer variables from the first u() call we can find in the operator
-    u_args_vars = []
+    # Infer variables from function calls
     from sympy import preorder_traversal
-    for node in preorder_traversal(op_expr):
-        if is_u_call(node):
-            u_args_vars = list(node.args)
-            break
+    func_args_vars = {}
+    for k, op_expr in op_parsed.items():
+        for node in preorder_traversal(op_expr):
+            if isinstance(node, AppliedUndef) and node.func.__name__ in funcs:
+                if node.func.__name__ not in func_args_vars:
+                    func_args_vars[node.func.__name__] = list(node.args)
 
-    def replace_u_call(expr: sp.Basic) -> sp.Basic:
-        if is_u_call(expr):
+    def replace_call(expr: sp.Basic) -> sp.Basic:
+        if isinstance(expr, AppliedUndef) and expr.func.__name__ in funcs:
+            func_name = expr.func.__name__
             sub_map = {}
+            expected_args = func_args_vars.get(func_name, [])
             for i, arg_val in enumerate(expr.args):
-                if i < len(u_args_vars):
-                    sub_map[u_args_vars[i]] = arg_val
-            return u_m.subs(sub_map)
+                if i < len(expected_args):
+                    sub_map[expected_args[i]] = arg_val
+            return u_m[func_name].subs(sub_map)
         return expr
 
-    source_expr = op_expr.replace(is_u_call, replace_u_call)
-    if source_expr == op_expr:
-        source_expr = op_expr.subs(u_sym, u_m)
-
-    source_term = source_expr.doit()
-
-    if symbols_dict:
-        sym_sub_map = {sym_objs[k]: v for k, v in symbols_dict.items()}
-        source_term = source_term.subs(sym_sub_map)
-
     # Variables for the problem
-    # Extract them from domain_dict, keeping t separate if it exists
     prob_vars = []
     t_sym = None
     for var_str in domain_dict:
@@ -120,44 +120,68 @@ def parse_mms_problem(
         else:
             prob_vars.append(sym_objs[var_str])
 
-    # If domain_dict wasn't provided or didn't contain anything, guess from u_args
+    # If domain_dict wasn't provided or didn't contain anything, guess from func_args
     if not prob_vars and not t_sym:
-        for v in u_args_vars:
-            if str(v) == "t":
-                t_sym = v
-            else:
-                prob_vars.append(v)
+        for args in func_args_vars.values():
+            for v in args:
+                if str(v) == "t":
+                    t_sym = v
+                elif v not in prob_vars:
+                    prob_vars.append(v)
     
     # Ultimate fallback
     if not prob_vars:
-        prob_vars = [sym_objs["x"]]
+        prob_vars = [sym_objs.get("x", sp.Symbol("x"))]
 
-    vanished: list[str] = []
+    problems = {}
     
-    # Detect vanishing terms
-    if isinstance(op_expr, sp.Add):
-        terms_to_check = op_expr.args
-    else:
-        terms_to_check = (op_expr,)
-        
-    for term in terms_to_check:
-        term_subbed = term.replace(is_u_call, replace_u_call)
-        if term_subbed == term:
-            term_subbed = term.subs(u_sym, u_m)
-        term_eval = term_subbed.doit()
-        if symbols_dict:
-            term_eval = term_eval.subs(sym_sub_map)
-        term_eval = sp.simplify(term_eval)
-        
-        if term_eval == 0:
-            vanished.append(str(term))
+    sym_sub_map = {sym_objs[sym]: val for sym, val in symbols_dict.items()} if symbols_dict else {}
 
-    return MMSProblem(
-        operator_expr=op_expr,
-        manufactured_sol=u_m,
-        symbols_map={sym_objs[k]: v for k, v in symbols_dict.items()},
-        variables=prob_vars,
-        time_var=t_sym,
-        source_term=sp.simplify(source_term),
-        vanished_terms=vanished,
-    )
+    for k, op_expr in op_parsed.items():
+        source_expr = op_expr.replace(
+            lambda e: isinstance(e, AppliedUndef) and e.func.__name__ in funcs, 
+            replace_call
+        )
+        if source_expr == op_expr:
+            # Fallback if no explicit function calls, maybe direct symbols
+            sub_dict = {sym_objs[fn]: u_m[fn] for fn in funcs if fn in sym_objs}
+            source_expr = op_expr.subs(sub_dict)
+
+        source_term = source_expr.doit()
+        if sym_sub_map:
+            source_term = source_term.subs(sym_sub_map)
+        
+        vanished: list[str] = []
+        if isinstance(op_expr, sp.Add):
+            terms_to_check = op_expr.args
+        else:
+            terms_to_check = (op_expr,)
+            
+        for term in terms_to_check:
+            term_subbed = term.replace(
+                lambda e: isinstance(e, AppliedUndef) and e.func.__name__ in funcs, 
+                replace_call
+            )
+            if term_subbed == term:
+                sub_dict = {sym_objs[fn]: u_m[fn] for fn in funcs if fn in sym_objs}
+                term_subbed = term.subs(sub_dict)
+            term_eval = term_subbed.doit()
+            if sym_sub_map:
+                term_eval = term_eval.subs(sym_sub_map)
+            term_eval = sp.simplify(term_eval)
+            if term_eval == 0:
+                vanished.append(str(term))
+
+        problems[k] = MMSProblem(
+            operator_expr=op_expr,
+            manufactured_sol=u_m.get(k, sp.Integer(0)),
+            symbols_map={sym_objs[sym]: val for sym, val in symbols_dict.items()} if symbols_dict else {},
+            variables=prob_vars,
+            time_var=t_sym,
+            source_term=sp.simplify(source_term),
+            vanished_terms=vanished,
+        )
+
+    if is_scalar:
+        return problems["u"]
+    return problems
