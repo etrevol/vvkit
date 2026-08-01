@@ -2,7 +2,7 @@
   <img src="design/assets/banner.svg" alt="vvkit banner" width="100%">
 </p>
 
-# vvkit — Verification Harness for Numerical Solvers
+# vvkit — Verification & Validation Harness for Numerical Solvers
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -10,16 +10,14 @@
 [![Type Checking: mypy strict](https://img.shields.io/badge/mypy-strict-brightgreen.svg)](https://mypy.readthedocs.io/)
 [![Wiki](https://img.shields.io/badge/docs-wiki-brightgreen.svg)](https://github.com/etrevol/vvkit/wiki)
 
-> **`pytest` proves your code runs. `vvkit` proves your discretization converges at the order you claim.**
+`vvkit` is the verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)** ([Roache, 2002](https://doi.org/10.1115/1.1436090)), systematic grid refinement sweeps, **[Grid Convergence Index (GCI)](https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer)** estimation per [ASME V&V 20-2009](https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer), discrete conservation budget checks, and regression baseline drift detection.
 
-`vvkit` is the professional verification framework for computational scientists and numerical solver authors (CFD, thermal-hydraulics, FEM, custom PDE codes). It automates formal code verification through the **Method of Manufactured Solutions (MMS)** ([Roache, 2002](https://doi.org/10.1115/1.1436090)), systematic grid refinement sweeps, **[Grid Convergence Index (GCI)](https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer)** estimation per [ASME V&V 20-2009](https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-fluid-dynamics-and-heat-transfer), discrete conservation budget checks, and regression baseline drift detection.
-
-## 📖 Comprehensive Documentation (Wiki)
+## Documentation
 
 For detailed installation instructions, architectural overview, mathematical theory, and plugins, please visit the **[vvkit Wiki](https://github.com/etrevol/vvkit/wiki)**.
 
-- **[Setup Guide](https://github.com/etrevol/vvkit/wiki/Home)**: How to install and configure `vvkit`.
-- **[Mathematical Theory](https://github.com/etrevol/vvkit/wiki/Theory)**: Deep dive into the verification mathematics ($L_1$, $L_2$, $L_\infty$ norms, Grid Convergence Index).
+- **[Setup Guide](https://github.com/etrevol/vvkit/wiki/Getting-Started)**: How to install and configure `vvkit`.
+- **[Theory & Mathematical model](https://github.com/etrevol/vvkit/wiki/Theory-&-Mathematical-model)**: Deep dive into the verification mathematics ($L_1$, $L_2$, $L_\infty$ norms, Grid Convergence Index).
 - **[Verification Suite Demos](https://github.com/etrevol/vvkit/wiki/Demos)**: Explanation of the Python verification suites.
 - **[Athena++ Integration](https://github.com/etrevol/vvkit/wiki/Athena++-Integration)**: Full documentation of the automated Athena++ MHD verification plugin.
 - **[Plugins and Adapters](https://github.com/etrevol/vvkit/wiki/Plugins-and-Adapters)**: How to write your own adapter for any C/C++/Fortran numerical solver.
